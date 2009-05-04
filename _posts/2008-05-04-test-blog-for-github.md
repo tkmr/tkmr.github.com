@@ -40,7 +40,9 @@ HTMLはどうかな？
 
 画像とか
 
-あと、生HTML <img src="http://www.google.com/images/logo.gif" />
+あと、生HTML
+
+<img src="http://www.google.com/images/logo.gif" />
 
 おっけー？
 
