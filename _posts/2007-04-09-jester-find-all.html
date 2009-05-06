@@ -7,7 +7,7 @@ permalink: /tatsuya/show/304-jester-find-all
 <a href="http://www.flickr.com/photos/28646244@N00/450232530/" title="Photo Sharing">
   <img src="http://farm1.static.flickr.com/187/450232530_a4a88239f5_o.jpg" width="588" height="193" alt="Jester-find_all" /></a>
 </p><p>
-  Jester 一通り必要な機能は揃ってるけど、一つ言うなら一覧取得が欲しい。Base.find_all()とかでpaginate対応だとさらに嬉しいかも。ということでfind_allを機能追加してみた、本当はfind(:all)みたいにしたいけど面倒なのでいいや、こんな感じで。
+  xxx Jester 一通り必要な機能は揃ってるけど、一つ言うなら一覧取得が欲しい。Base.find_all()とかでpaginate対応だとさらに嬉しいかも。ということでfind_allを機能追加してみた、本当はfind(:all)みたいにしたいけど面倒なのでいいや、こんな感じで。
   </p><pre>Base.prototype.find_all = function() {
     var models = [];
     var docs = this._tree.parseHTTP(this.plural_url(), {})[this._plural][this._singular];
