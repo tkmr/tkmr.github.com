@@ -1,0 +1,43 @@
+---
+layout: old_post
+title: muninプラグインでRailsの処理時間をモニタリング&監視
+permalink: /tatsuya/show/420-munin-rails
+---
+<p>そういえば、半年ほど前から<a href="http://fooo.name/">fooo.name</a>の監視に<a href="http://munin.projects.linpro.no/">munin</a>を入れていて、muninプラグインを書いてRailsのパフォーマンスをモニタリングできるようしているのですが</p><img src="http://farm3.static.flickr.com/2333/2458249343_c192ef48a3.jpg" />
+<p class="clear">その手順を書いておくと誰か嬉しい人がいるかなと思ったので、メモを残しておきます。サーバはAmazon EC2</p>
+<p class="clear">　</p>
+<p class="clear"></p>
+<h2>muninのインストール</h2>
+<p class="clear">apt-getでmuninをインストール</p>
+<p class="clear"></p>
+<pre>
+<br />% <strong>apt-get install munin munin-node</strong><br />% <strong>/etc/init.d/munin-node start</strong>
+</pre>
+<p class="clear">Apache・MySQL・CPU / メモリ / ネットワーク / ロードアベレージ 辺りのモニタリングが始まる。実際にはcronが設定されていてデフォルト５分に１回モニタリング結果がHTMLとして出力される。出力される場所はconfigファイル /etc/munin/munin.conf にあるので、好みで編集<br /></p>
+<pre>
+<br />% emacs<strong> /etc/munin/munin.conf</strong><br />dbdir /var/lib/munin<br />htmldir /var/www/munin<br />logdir /var/log/munin<br />rundir /var/run/munin
+</pre>
+<p class="clear">あとは /var/www/munin 以下をApacheで見えるように設定、Virtual hostを設定してBasic認証を掛けておいた</p>
+<pre>
+<br />% emacs <strong>/etc/apache2/httpd.conf</strong><br />&lt;VirtualHost *:80&gt;<br />  DocumentRoot /var/www/munin<br />  ServerName *********<br />&lt;/VirtualHost&gt;<br />&lt;Directory "/var/www/munin"&gt;<br />  AuthType Basic<br />  AuthName "Munin zone"<br />  AuthUserFile /etc/apache2/.htpasswd<br />  Require user ********<br />&lt;/Directory&gt;<br />
+</pre><br />
+<h2>Railsのログをmuninでモニタリング</h2>
+<p>あとは、この↓サイトを真似してやればOK</p>
+<p><a href="http://onrails.org/articles/2007/08/31/monitoring-rails-performance-with-munin-and-a-mongrel">Monitoring Rails Performance with Munin and a Mongrel</a><br /></p>
+<p>Railsの出力するlogから total / render / db の時間を見つけ max と avg の値を求め、muninでそれを監視する。Railsアプリケーションの scriptフォルダへ以下のスクリプトを置く</p>
+<pre>
+<br />% emacs <strong>script/rails_log_monitor.rb</strong><br />・・・・・・<br />h = Mongrel::HttpServer.new("127.0.0.1", PORT)<br />h.register("/avg_response_time", ResponseTimeHandler.new(:average))<br />h.register("/max_response_time", ResponseTimeHandler.new(:max))<br />h.run.join<br /><a href="https://dl.getdropbox.com/u/3111/fooo/rails_log_monitor.rb">rails_log_monitor.rb</a>
+</pre>
+<p>上記スクリプトを実行すると port 8888 でmongrelが立ち上がる、muninはそこへアクセスし結果を取得する</p>
+<p>% <strong>ruby script/rails_log_monitor.rb</strong></p>
+<p>　</p>
+<p>次に、muninプラグインとして下記のスクリプトを /etc/munin/plugins 配下へ</p>
+<p><a href="https://dl.getdropbox.com/u/3111/fooo/avg_response_time">avg_response_time</a><br /></p>
+<p>avg_response_time と max_response_time という名前で置いておく。結果muninが http://127.0.0.1:8888/#{ファイル名} へアクセスし結果を取得、グラフ化。</p><img src="http://farm3.static.flickr.com/2308/2459760378_c25d745e18_o.jpg" />
+<p class="clear"></p>
+<p class="clear"></p>
+<h2>以上</h2>
+<p class="clear">基本<a href="http://onrails.org/articles/2007/08/31/monitoring-rails-performance-with-munin-and-a-mongrel">このサイト</a>を真似してやればOK、rails_log_moniter.rb を好きにいじれば ”特定のアクション・コントローラ・処理" 等をグラフ化してモニタリングできる筈。</p>
+<p class="clear"><br /></p>
+
+

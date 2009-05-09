@@ -1,0 +1,41 @@
+---
+layout: old_post
+title: MySpaceでOpenSocialアプリケーション "OpenIDクライアント" ー (3)
+permalink: /tatsuya/show/421-myspace-opensocial-openid-3
+---
+<p>前回から引き続き、OpenIDの "関連付け" と OpenSocial の汎用データストレージについて</p>
+<p><a href="http://blog.tkmr.org/tatsuya/show/417-myspace-opensocial-openid-1">MySpaceでOpenSocialアプリケーション "OpenIDクライアント" ー (1)</a></p>
+<p><a href="http://blog.tkmr.org/tatsuya/show/418-myspace-opensocial-openid-2">MySpaceでOpenSocialアプリケーション "OpenIDクライアント" ー (2)</a></p>
+<p>　</p>
+<h2>association（共有鍵の交換）</h2>
+<p>OpenIDのspecでは認証リクエスト前にOpenID認証局と共有鍵の交換を行うことが推奨されている。</p>
+<p><a href="http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#associations">参考：http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#associations</a></p>
+<p>本来、鍵交換には<a href="http://ja.wikipedia.org/wiki/Diffie-Hellman%E9%8D%B5%E5%85%B1%E6%9C%89">Diffie-Hellman鍵共有アルゴリズム</a>を利用するべき、と思うけど今回DH鍵交換アルゴリズムを実装するのが目的ではないのでsettion_typeは一番単純な "no-encryption" で実装する。</p>
+<p>なお "no-encryption" の場合SSL（https）で通信するべきとのこと（"no-encryption" association sessions MUST NOT be used unless the messages are using transport layer encryption.）</p>
+<p>　</p>
+<p>まずOpenID RPからOPへ association リクエストを投げる、前回のHTMLベース探索と同様に OpenSocial API の makeRequest で通信を行い、認証結果を受け取る。</p>
+<pre class="source">
+<br />openid.association = function(request_option, callback){<br />  var <span class="keyword">self</span> = this;<br />  var params = {};<br />  params.contentType = gadgets.io.ContentType.TEXT;<br /><br />  //パラメータをクエリーストリングとして付加しURLを組み立てる<br />  var param = [];<br />  param.push([<span class="str">"openid.ns"</span>,<span class="str">"http://specs.openid.net/auth/2.0"</span>]);<br />  param.push([<span class="str">"openid.mode"</span>, <span class="str">"associate"</span>]);<br />  param.push([<span class="str">"openid.assoc_type"</span>, <span class="str">"HMAC-SHA1"</span>]);<br />  param.push([<span class="str">"openid.session_type"</span>, <span class="str">"no-encryption"</span>]);<br />  var url = this.makeURL(request_option.provider, param);<br /><br />  //association HTTPリクエスト<br />  gadgets.io.makeRequest(url, function(result){<br /><span class="comment">    //association レスポンス解析</span><br />  }, params);<br />}
+</pre>
+<p>送る方は簡単 session_type は "no-encryption"</p>
+<p>　</p>
+<h2>共有鍵のキャッシュ -&gt; OpenSocial汎用データストレージ</h2>
+<p>associationレスポンスを解析し有効期限（expire）が切れるまでキャッシュしておく。</p>
+<p>今回はキャッシュのために OpenSocial API の汎用データストレージを利用する。このストレージ領域には key &amp; value で任意の文字列を保存することが可能で、各アプリケーションそれぞれ別の保存領域となり、ユーザ毎にユニークとなるというデータストレージらしい。</p>
+<p>opensocial.DataRequest クラスの newUpdatePersonAppDataRequest(ユーザID, key, value) メソッドを利用する。</p>
+<p style="font: 12.0px Helvetica"><a href="http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.DataRequest.html#newUpdatePersonAppDataRequest">http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.DataRequest.html#newUpdatePersonAppDataRequest</a></p>
+<p><span style="font-family: -webkit-monospace; white-space: pre;">下記のようにパラメータを解析し結果をJSON形式の文字列へ変換、それをvalue、OPエンドポイントURLをkeyとする。</span><br /></p>
+<pre class="source">
+<br />gadgets.io.makeRequest(url, function(result){<br />  var results = {};<br /><br />  //レスポンス結果を解析<br />  var params = result.data.split(<span class="str">"\n"</span>);<br /><span class="keyword">  for</span>(var i=<span class="num">0</span>; i &lt; params.length; i++){<br /><span class="keyword">    if</span>(params[i].search(<span class="str">":"</span>) &gt; <span class="num">0</span>){<br />      var param = params[i].match(<span class="regex">/^([^:]*):(.*)/</span>);<br />      results[param[<span class="num">1</span>]] = param[<span class="num">2</span>];<br />    }<br />  }<br /><br />  //assoc_handle, mac_key, expires等必要な情報をJSON形式の文字列へ<br />  var value = this.toJSON({<br /><span class="str">    "assoc_type"</span><span class="sym">:results</span>[<span class="str">"assoc_type"</span>],<br /><span class="str">    "expires_in"</span><span class="sym">:results</span>[<span class="str">"expires_in"</span>],<br /><span class="str">    "mac_key"</span><span class="sym">:results</span>[<span class="str">"mac_key"</span>],<br /><span class="str">    "session_type"</span><span class="sym">:results</span>[<span class="str">"session_type"</span>]<br />  });<br />  <br />  //汎用データストレージへ保存、keyはOPエンドポイントURL<br />  var req = opensocial.newDataRequest();<br />  var key = request_option.provider;<br />  req.add(req.newUpdatePersonAppDataRequest(req.PersonId.VIEWER, key, value));<br />  req.send(function(data){<br />    callback(result, data);<br />  });<br />}, params);
+</pre>
+<p>本来のDH鍵交換でやる場合は・・・HTTPリクエストをやって、データストレージへ期限切れるまでキャッシュという大枠は変わらない筈。<br /></p>
+<p>今回の gadgets.io.makeRequest API のようにOpenSocialコンテナ（myspace / orkut等）がプロキシとして働くHTTPリクエストの場合<strong>でも</strong>、DH鍵交換アルゴリズムなら盗聴の危険性は無いってことで良いのかな。あ、でもOpenSocialコンテナによる改竄の危険はあるのか。</p>
+<p>まあ実装実験ということで。<br /></p>
+<p>　</p>
+<h2>以上</h2>
+<p>ちょっとしたJavaScriptのアプリケーションを作る時に、ちょっとしたデータ保存領域が欲しい事は結構あると思う。（占いアプリで占い履歴とか、占い選択肢とか）</p>
+<p>その時サーバを自分で立ててWebAPIでデータストレージを用意してやるのは面倒、かなり面倒。</p>
+<p>OpenSocial標準のAPIで汎用的なデータストレージが用意されていて、key &amp; value ペアで任意の文字列を保存できるのは結構使い所ありそうだと思う。JSONにしてやれば構造化もできるわけだし。</p>
+<p>　</p>
+
+

@@ -1,0 +1,79 @@
+---
+layout: old_post
+title: Railsホスティングサービスheroku.comとソース管理Git
+permalink: /tatsuya/show/419-rails-heroku-com-git
+---
+<p>AmazonEC2上で動いて、Webブラウザから開発・運用できるRailsアプリケーションのホスティングサービスheroku.com</p><img src="http://farm4.static.flickr.com/3058/2458939824_03c924f305.jpg" width="500" height="499" alt="2458939824_03c924f305.jpg" style="border:1px #000000 dotted;" />
+<p class="clear"><a href="http://jp.techcrunch.com/archives/heroku-lifts-ruby-on-rails-development-to-the-cloud/">Herokuが、ブラウザー内でRuby on Railsの開発を可能に</a><br /></p>
+<p><a href="http://heroku.com/">Heroku.com</a><br /></p>
+<p>がGitによるソース管理 &amp; ローカル開発に対応したそうなので、ひとつ試してみる。Macで</p>
+<p>　</p>
+<h2>Gitとherokuクライアントのインストール</h2>
+<p>まずPCにGitが入ってないのでインストール。そういえばGitが海外のRubistの間で流行ってるらしいねー、Coderepos的な<a href="http://github.com/">Github</a>ってGitリポジトリ共有サイトもあるらしいし。で今回のherokuもソース管理にGitを使うのでインストール</p>
+<pre>
+<br />% <strong>sudo port install git-core</strong>
+</pre>
+<p>その後、herokuのコマンドラインクライアントをインストール</p>
+<pre>
+<br />% <strong>sudo gem install heroku</strong>
+</pre>
+<p>自分用のssh公開・秘密鍵が無ければ用意しておく</p>
+<pre>
+<br />% <strong>ssh-keygen -t rsa</strong>
+</pre>
+<p>自分のherokuアカウントと、ssh公開鍵を関連付ける<br /></p>
+<pre>
+<br />% <strong>heroku list</strong><br />Enter your Heroku credentials.<br />Email: mymail@example.com<br />Password: ********<br />Uploading ssh public key<br />=== My Apps<br />resttest
+</pre>
+<p>登録成功、この時点でWeb上から作成済みのアプリケーションがあると、表示される。</p>
+<p>　</p>
+<h2>テストアプリケーション作成</h2>
+<p>コマンドラインから新しいアプリケーション "<strong>tktest</strong>" を作成</p>
+<pre>
+<br />% <strong>heroku create tktest</strong><br />Created http://tktest.heroku.com/
+</pre>
+<p>ブラウザで開くと確かに作成済み、次にリポジトリからローカルへ落とす</p>
+<pre>
+<br />% <b>heroku clone tktest</b>
+</pre>
+<p>裏では git clone tktest@tktest.heroku.com みたいなコマンドを実行してるっぽい。ここで何故かssh-keyが見付からないと言われたので ~/.ssh/config を書いておいた、Protocol 1 は不要だと思う。</p>
+<pre>
+<br />% <strong>emacs ~/.ssh/config</strong><br />Host *<br />IdentityFile ~/.ssh/id_dsa<br />IdentityFile ~/.ssh/identity<br />Protocol 2,1
+</pre>
+<p>tktestフォルダ内に通常通りRailsアプリのディレクトリができている筈</p>
+<pre>
+<br />% <strong>cd ./tktest</strong><br />% <strong>ruby script/server</strong>
+</pre>
+<p>mongrelが立ち上がり、とりあえずローカル開発準備完了</p><img src="http://farm3.static.flickr.com/2193/2458134269_34e6fdf90d_o.jpg" width="753" height="190" alt="2458134269_34e6fdf90d_o.jpg" style="border:1px #000000 dotted;" />
+<p class="clear">　</p>
+<h2>編集、コミット、デプロイ</h2>
+<p>新しいコードを作って適当に編集</p>
+<pre>
+<br />% <strong>ruby script/generate scaffold Post body:text</strong><br />.........
+</pre>
+<p>とりあえずできた、localhostで確認してからコミットする</p>
+<pre>
+<br />% <strong>git add .</strong><br />% <strong>git commit</strong>
+</pre>
+<p>gitの使い方がよく判らないけど、とりあえずコミット完了。本番環境へ反映する</p>
+<pre>
+<br />% <strong>git push</strong><br />Enter passphrase for key '.ssh/id_rsa':<br />Counting objects: 43, done.<br />Compressing objects: 100% (29/29), done.<br />.........<br />HEAD is now at e6b0b72... test<br />NOTICE: CREATE TABLE will create implicit sequence "posts_id_seq" for serial column "posts.id"<br />NOTICE: CREATE TABLE / PRIMARY KEY will create implicit index "posts_pkey" for table "posts"<br />(in /mnt/home/userapps/15472)<br />== 1 CreatePosts: migrating ===================================================<br />-- create_table(:posts)<br />-&gt; 0.1817s<br />== 1 CreatePosts: migrated (0.1818s) ==========================================<br />
+</pre>
+<p>herokuのリポジトリへPushと同時に rake db:migrate と mongrelの再起動までやってくれるぽい。確認してみる</p>
+<p><a href="http://tktest.heroku.com/posts">http://tktest.heroku.com/posts</a><br /></p>
+<p>うむうむ、動いてる。</p>
+<p>　</p>
+<h2>以上</h2>
+<p>まあちょっとしたアプリケーション作るには楽で良いなheroku.com。現在はベータ中で無料、正式サービスになると課金が始まるらしいけどAmazon EC2で動いているので、課金額もそれくらいになるのかな。Google App Engineと比べると面白い機能は無いけど、作ったサービスの人気が出て自分のサーバで運用したくなったときにheroku.comは良いな。Rails &amp; mongrel &amp; MySQL(?) という普通の環境なので。</p>
+<p>例えば突然 heroku.com のサーバが爆発してサービスが止まっても、ローカルにソースコード一式がで揃っているので自分のサーバを用意して復旧できる。データのバックアップだけは気を付ける必要あるけど、ちなみに heroku.com 本番環境の管理はWebからやれ、というポリシーらしい</p><img src="http://farm4.static.flickr.com/3002/2458988786_5dd8fa7fe4_o.jpg" />
+<p class="clear">DB管理画面</p><img src="http://farm4.static.flickr.com/3113/2459011484_8c4abb15fb_o.jpg" />
+<p class="clear">コンソール画面（ruby script/console）</p>
+<p class="clear">あと、rakeタスクを実行する画面もある。</p>
+<p class="clear">　</p>
+<p class="clear"></p>
+<p>そういえば、ちょうど昨日Google app engineでちょっとしたアプリケーションを作る話を読んで</p>
+<p><a href="http://d.hatena.ne.jp/shinichitomita/20080501">Google App Engineの使い道、tiny web service</a><br /></p>
+<p>確かに「サーバサイドで処理しないとできないけど、わざわざサーバを用意するのは面倒だな」ってときに、Google app engine や heroku.com や appjet.com なんかの環境が便利だなと思った。</p>
+<p class="clear"><br /></p><br />
+
+
