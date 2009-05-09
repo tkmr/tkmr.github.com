@@ -1,0 +1,35 @@
+---
+layout: old_post
+title: fooo.name更新 - バグ潰しとtako3.com互換API
+permalink: /tatsuya/show/401-fooo-name-tako3-com-api
+---
+<p>
+<a href="http://fooo.name/">fooo.name</a> 幾つかバグ潰しと、API更新 しました。
+</p><p>
+主な変更点はtako3.com互換APIの追加です。詳細な情報は<a href="http://fooo.name/main/aboutapi">こちらをどうぞ</a>ご確認ください。
+<br />次はGreasemonkeyスクリプトでAPIの実験みたいなのをやろうかな。あと、今後のTODOをまとめ
+</p><p>
+TODO:
+<br /><span style="text-decoration:underline;"><strong>・同一アカウント</strong></span><span style="text-decoration:underline;"><strong>&#38;</strong></span><span style="text-decoration:underline;"><strong>別人問題の対応</strong></span>
+</p><p>
+さすがに今のままだと、誤情報が混じってくるのである程度フィルタリングを設けたい。
+</p><p>
+A) 人と人の繋がりで判断。複数サービスで "tkmr" が同じ "hoge" さんをフレンドにしていれば、その複数サービスの "tkmr" は同一人物とみなす（一致率がある閾値を超えたら）
+</p><p>
+B) 各ページの特徴語をベイズフィルタに掛ける。自分だったら "tkmr", "ruby", "rails" なんかの頻出語、URL、フレンドのアカウント名等を複数ページで調べる。少なくともこれで海外サービス等の別人はフィルタリング（グルーピング）できるかも。（たとえば "tkmr" の場合は <a href="http://www.myspace.com/tkmr">http://www.myspace.com/tkmr</a> ）
+</p><p>
+あとベイズフィルタで閾値を設ければ、死にアカのフィルタもできるかも。作ったけど全く更新していないページ等はマッチしないので。というかB方式はA方式を内包するのか。
+</p><p>
+<span style="text-decoration:underline;"><strong>・フィルタリング選択</strong></span>
+<br />用途によって求められる精度も違うと思う。ゆるい用途ならフィルタも要らないし、ある程度ならベイズフィルタ、さらに信頼できる情報が必要なら「同一セッションで複数サービスの認証を通った証明」フィルタ、とか選択可能にしたい。http://fooo.name/accounts/tkmr?filter=high みたいな
+</p><p>
+<span style="text-decoration:underline;"><strong>・繋がり情報の収集</strong></span>
+<br />サイトのURLパターンはあるので、各ページにある "フレンドへのリンク" のURLをXPath等で設定可能にすれば収集できるかも。
+<br /><strong>twitter</strong><strong>繋がり</strong><strong> = //a[@rel="contact"]</strong>
+<br />みたいな。で http://twitter.com/[name] にマッチすればフレンドのアカウント名も取れるし。人と人の繋がりがHTMLでも提供されてれば汎用的に行けるかな。
+</p><p>
+<span style="text-decoration:underline;"><strong>・</strong></span><span style="text-decoration:underline;"><strong>URL</strong></span><span style="text-decoration:underline;"><strong>の登録拒否サポート（ブロックリスト）</strong></span>
+<br />今は細々とやってるので良いかなと思うけど、今後を考えると「私のURLを登録しないで！」というサポートフォームみたいなのは付けた方が良いかな。ブロックリストみたいな。
+<br />でもどうやって本人を確認するか、認証APIがある &#38; OpenIDなら認証を通ればOKとできるが。。
+</p>
+

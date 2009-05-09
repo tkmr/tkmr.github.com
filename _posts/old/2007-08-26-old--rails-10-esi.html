@@ -1,0 +1,71 @@
+---
+layout: old_post
+title: 「Railsの画面生成を10倍高速化する方法」をESIで実装する
+permalink: /tatsuya/show/368-rails-10-esi
+---
+<p>やっと最近余裕が出てきて、溜まってた「あとで読む」リストを消化中ですが、１個面白そうなブログがあったので試してみる</p>
+<p><a href="http://revolutiononrails.blogspot.com/2007/08/advanced-rails-caching-on-edge.html">Advanced Rails Caching.. on the Edge</a></p>
+<p>どうも「Railsは重いので<a href="http://ew.hitachi-system.co.jp/w/ESI.html">ESI</a>でページキャッシュを組み合わせてカバーしよう、ESIのmongrel実装とRails用ESIタグ出力プラグインを開発中だ」と言ってるみたい。発端としては少し前の「 <a href="http://idm.s9.xrea.com/ratio/2007/07/16/000642.html">Railsの画面生成を10倍高速化する方法</a> 」このエントリに似た話で</p>
+<p>・Railsは遅い、Rubyが遅くてRoutingが遅くてRDBとRHTMLが遅い。</p>
+<p>・なので、出来るだけページキャッシュでさばきたい（フロントのWebサーバのみで処理）</p>
+
+<p>・でもユーザ固有情報を表示するのが難しい（ようこそ○○さん）</p>
+<p>ここでRails抜きで動的ページを処理するアイデアが幾つか出て来てて</p>
+<p>・JavaScript使ってクライアントサイドで動的処理をしようよ派 （<a href="http://www-06.ibm.com/jp/developerworks/web/library/wa-rails2/">現実の世界の Rails、第 2 回: 高度なページ・キャッシング</a>）</p>
+<p>・サーバサイドで完結させたい派（Railsは基本的なHTMLをページキャッシュとして出力、何らかの手段で二次処理を加える）</p>
+<p>　・SSIを使う（<a href="http://idm.s9.xrea.com/ratio/2007/07/16/000642.html">Railsの画面生成を10倍高速化する方法</a>）</p>
+<p>　・ESIを使う（<a href="http://revolutiononrails.blogspot.com/2007/08/advanced-rails-caching-on-edge.html">Advanced Rails Caching.. on the Edge</a>）</p>
+
+<p>等の試行錯誤がされてるみたい。（厳密に言うとESIの人は「更新頻度が少なくても問題無い部分をESIでTTL指定してキャッシュしよう」と言ってる気がするけど気にしない）</p><br>
+<p>ということで、今回はESIを試してみる。ESIのmongrel実装が開発されてるらしいので、まずインストール。</p>
+<pre>wget http://mongrel-esi.googlecode.com/files/mongrel-esi-0.0.5.gem
+sudo gem install mongrel-esi-0.0.5.gem
+</pre>
+<p>適当なRailsアプリへ移動し、index.htmlを書き換える。</p>
+<pre>cd /home/my/rails/app/path
+----index.html-----
+&lt;h1&gt;Welcome ESI!!&lt;/h1&gt;
+&lt;p&gt;&lt;esi:include src="/welcome/now" max-age="45"/&gt;&lt;/p&gt;
+
+</pre>
+<p>mongrel_esiを起動</p>
+<pre>mongrel_esi start
+  ** Starting Mongrel listening at 0.0.0.0:2000
+</pre>
+<p>ブラウザで http://localhost:2000/index.html を開く、、と例のタグの部分へ 「http://localhost:2000/welcome/now というページが無い」とエラーが出る筈。esi:includeタグ部分へmongrel_esiが外部ページを読み込んでいるので成功。読み込まれるページを用意する</p>
+<pre>./script/generate controller welcome now
+----welcome_controller.rb----
+def now
+  render :text =&gt; "#{Time.now}"
+end
+</pre>
+<p>再度表示すると、上手く読み込まれる。45秒間キャッシュする設定にしたので（max-age=45）その間は時刻が同じで表示される。これで無事、静的ページへ45秒に１回更新の動的部分を組み込むことができた。</p><a href="http://www.flickr.com/photos/28646244@N00/1232739131/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1188/1232739131_1057456519_o.png" alt="Welcome ESI!!" height="158" width="404"></a>
+<p class="clear">次はRails用のESIタグ出力プラグイン ”fragmentFu” をインストール、/welcome/index に実装してみる</p>
+<pre>
+./script/plugin install http://mongrel-esi.googlecode.com/svn/trunk/plugin/fragment_fu
+----/app/view/welcome/index.html.erb----
+&lt;h1&gt;Welcome ESI!!&lt;/h1&gt;
+&lt;p&gt;&lt;%= render :esi =&gt; {:action =&gt; "now"}, :ttl =&gt; 45.seconds %&gt; &lt;/p&gt;
+</pre>
+<p>これで上でhtmlに記述したタグと同じESIタグが出力される。あとはこれをページキャッシュに指定すればOK。但し「ようこそ○○さん」等のユーザ固有処理を行うためにはSSIと同じようにESI + PHPを組み合わせる等工夫が必要になるかもしれない。ちなみにESIではCookieの値や、クエリーストリングなんかを処理に組み込めるので</p>
+<pre>
+#クエリーストリングをページ読み込みのURLに利用
+&lt;p&gt;&lt;%= render :esi =&gt; "/users/name/$(QUERY_STRING{my_name})" %&gt; &lt;/p&gt;
+#Cookieをページ読み込みのURLに利用
+&lt;p&gt;&lt;%= render :esi =&gt; "/users/home/$(HTTP_COOKIE{UserID})" %&gt; &lt;/p&gt;
+</pre>
+<p>等、動的に読み込む外部ページのURLを変えることである程度「Rails &amp; 2段階のページキャッシュ」で完結できる、かも。まあ別にSSIだろうがESIだろうが結局は何でも良いんだけど、しいていうならコードはRailsで完結させたいな。さらに理想を言えば</p>
+<p>初回）/welcome/index と /users/show/ユーザID/name をページキャッシュ</p>
+<p>初回以降）/welcome/indexの静的ページキャッシュへ、 /users/show/$(HTTP_COOKIE{UserID})/name のページキャッシュをESIで動的読み込み（ようこそ○○さん）</p>
+<p>ユーザが名前を変更）/users/show/ユーザID/name をキャッシュ作り直し</p>
+<p>（他のページからも /users/show/ユーザID/name を利用するがキャッシュは一つ）</p>
+<p><br>
+というのがやりたい。Rails出力は初回のみにして基本ページキャッシュを表示する、しかもmongrel + Railsな手慣れたツールで完結させたい。もう少し考えてみよう。</p>
+<p>参考リンク</p>
+
+<p><a href="http://www.w3.org/TR/esi-lang">W3C ESI Language Specification 1.0</a> ESIのW3C仕様</p>
+<p><a href="http://revolutiononrails.blogspot.com/2007/08/fragmentfu-fun-with-fragments.html">FragmentFu - Fun with Fragments</a> mongrel_esiとRailsの連携、チュートリアル有</p>
+<p><span style=""><a href="http://www-06.ibm.com/jp/developerworks/web/library/wa-rails2/">現実の世界の Rails、第 2 回: 高度なページ・キャッシング</a> JavaScriptでページキャッシュを２次処理</span></p>
+<p><span style=""><a href="http://idm.s9.xrea.com/ratio/2007/07/16/000642.html">Railsの画面生成を10倍高速化する方法</a> SSI + PHP でページキャッシュを２次処理</span></p>
+<p><a href="http://otndnld.oracle.co.jp/document/products/ds10g/101202/doc_v2/web/B15621-02/jesitags.html">Oracle - Edge Side Includes用のJESIタグ</a> ESIのOracle Application Server実装資料</p>
+

@@ -1,0 +1,90 @@
+---
+layout: old_post
+title: rsync + subversion + Amazon S3 = dropbox
+permalink: /tatsuya/show/416-rsync-subversion-amazon-s3-dropbox
+---
+<p>Google app engineのアカウントが申し込み間に合わなくてくやしいので、<a href="https://www.getdropbox.com/">Dropbox</a>についてでも書こう。　</p>
+<h2>rsync + Amazon S3 + subversion × 全自動 = dropbox</h2>
+<p>「気軽に複数PCでファイル共有できるオンラインストレージ」という触れ込みで登場した<a href="https://www.getdropbox.com/">Dropbox</a></p>
+<p><a href="http://jp.techcrunch.com/archives/dropbox-the-online-storage-solution-weve-been-waiting-for/">Techcrunch - Dropbox: みんなが待ち望んでいたオンラインストレージソリューションかも</a></p>
+<p>現在5GBまで無料のオンラインストレージで、実際のストレージにはAmazon S3を利用しているらしい。WindowsとMac用のクライントがあり、これが良くできていて</p>
+<p>ファイルの変更を検知して全自動でオンラインストレージへ保存し続けてくれる。しかもソース管理ツール的な履歴機能付き、編集の衝突も検知して上手く回避してくれる。</p>
+<p>さらに友人・知人と共有するSharedフォルダも作れてソーシャル的な展開も考えているみたい、試していないけど。</p>
+<p>　</p>
+<h2>動作例</h2>
+<p>例えば、このフォルダへ</p><img src="http://farm3.static.flickr.com/2046/2403772842_f5fba53b41_o.jpg" width="1157" height="575" alt="2403772842_f5fba53b41_o.jpg" />
+<p class="clear">普通にメモ帳でテキストを保存する</p><img src="http://farm3.static.flickr.com/2406/2404007628_ccf6dd4446.jpg" />
+<p class="clear">ファイルが自動でオンラインストレージに同期される！</p><img src="http://farm4.static.flickr.com/3133/2403780088_b022d6fc1f_o.jpg" />
+<p class="clear">　</p>
+<h2>履歴管理・衝突回避・その他</h2>
+<p class="clear">プログラマならこの辺が気になるだろうと思うので補足。</p>
+<p class="clear">履歴機能もしっかりしている、普通に個人で書くコードくらいなら履歴管理まかせても良いくらい</p><img src="http://farm3.static.flickr.com/2025/2403002045_7ac4f1742f_o.jpg" />
+<p class="clear">さあここで大変！自宅と会社で編集したファイルが衝突した！！</p><img src="http://farm4.static.flickr.com/3180/2403017837_92ef0e82cf_o.jpg" />
+<p class="clear">衝突したファイルはリネームされて保存される。上書きされて消えた！ってことは起こらない。まあ現実的な対応かな、しいていうなら「衝突ファイル一覧」を見たいくらいかな、RSSとかで。</p>
+<p class="clear">あと基本的にインストール後現れる「Dropbox」フォルダ以下が同期される、でもどうせならホームフォルダ辺りをこのDropbox以下にシンボリックリンクでリンクさせとくと超快適</p>
+<p class="clear">　・Windowsの場合 : <strong><span style="text-decoration: underline;">file link -symbolic リンク先 リンク元</span></strong></p>
+<p class="clear">　・Macの場合 ： <strong><span style="text-decoration: underline;">ln -s リンク元 リンク先</span></strong></p>
+<p class="clear">Macは普通だけど、Windowsにシンボリックリンクがあるのをこの件で調べて知った・・</p>
+<p class="clear">　</p>
+<p class="clear">Dropbox本当に細かい部分で気が利いていて良い、しかも何気に感動したのが全くストレスが無いこと。</p>
+<p class="clear">今まで、WebDAVで複数PCを同期、なんて方法も試したけどどうも書き込み＆読み込みが遅くストレスになって結局やめた。<a href="http://box.net/">Box.net</a> とか。</p>
+<p class="clear">でもDropboxの場合、ユーザはローカルのHDDを普通に読み書きする、その後バックグラウンドでゆっくり同期を行っているんだ思う。</p>
+<p class="clear">あくまでも我々はローカルHDDを読み書きするので、本当に存在を忘れるくらい快適。</p>
+<p class="clear">　</p>
+<p class="clear">ローカルHDDをキャッシュに使う、という発想はWebDAVになかったんだな、まあWebプロトコルのWebDAVとクライアントアプリケーションのDropboxでは性質が全く違うので当然なんだけど。</p>
+<p class="clear">全データをオンラインに保存する時代になると、ローカルHDDは只のキャッシュになるんだなと思う。</p>
+<p class="clear"><br /></p>
+<h2>全データをオンラインに保存する時代 ＝「アクセス権限制御」の時代</h2>
+<blockquote>
+  <p class="clear">「データをブログに書く」じゃなくて、「もうウェブにはのってて、パブにするかどうか決めるだけで情報は出る」べきだと思っていた。この「パブにするインターフェイス」みたいなものが効率化すればいいと。このためには文字列一致検索なり、属性絞込みなりについて、最高のインターフェイスがあって、筋肉運動くらい自由で詳細に（あるいはペンとか本のページをくくるくらい自由に詳細に）権限管理ができるべきだった。<br /></p>
+
+  <p class="clear"></p>
+
+  <p class="clear"><a href="http://toukubo.com/post/25520816">ウェブ3時代は「アクセス権限制御」の時代だと思えてきた - tokubo.com</a></p>
+</blockquote>
+<p class="clear">以前この↑文章を読んで、色々考えていた世界がDropboxで実現しそうな感じ。実際は5GBなんてちんけな容量なので「世界の片鱗が見えた」くらいだけどそれでも大きな進歩だ。</p>
+<p class="clear">自分の書いたテキスト、写真、楽曲、メール、ソースコード、コンフィグファイル、ブックマーク、ブラウザの履歴、コンピュータの操作履歴、、、全部オンラインストレージへ同期されていて</p>
+<p class="clear">API経由で自由に加工可能な世界がきっと来る。</p>
+<p class="clear">　</p>
+<p class="clear">実際、@ITでのDropbox開発者へのインタビューでもAPIの話が出ていて<br /></p>
+<blockquote>
+  <p class="clear">同社は現在すでにいくつかのオンラインサービス提供者と協力して、DropboxをWebアプリケーションから利用できるようAPIを整備している。となれば、例えばデジカメの写真をFlickrにアップロードするのに、Webブラウザや専用アプリケーションを用いる必要はなくなり、ふつうにフォルダにファイルをコピーするだけで、写真を公開できるようになる。逆に、Flickrにアップロードしたファイルを、ローカルのPCの画像編集ソフトを使ってダイレクトに編集ができるようになる。<br /></p>
+
+  <p class="clear"><a href="http://www.atmarkit.co.jp/news/200704/09/dropbox.html">http://www.atmarkit.co.jp/news/200704/09/dropbox.html</a><br /></p>
+</blockquote>
+<p class="clear">写真は全てオンラインに載ってて、あとは共有したい写真・フォルダを選びFlickrへ権限を与えるだけでデータがFlickrへ流れ・同期され公開される。「自分は全てFlickrで公開する」なんて人は全権限Flickrに与えるんだろう。</p>
+<p class="clear">または編集したい写真はPicnik（オンライン写真編集サービス）で編集する。Picnikに権限を与えて自動処理・一括処理も可能だろう。これはBox.netとPicnikで既に実現されている<a href="http://labs.gmo.jp/blog/ku/2007/12/openbox.html"></a></p>
+<p class="clear"><a href="http://labs.gmo.jp/blog/ku/2007/12/openbox.html">ほかのサービスとくっつけられるストレージサービスOpenBoxを自分でくっつける - bits and bytes</a></p>
+<p class="clear"><br /></p>
+<p class="clear">Dropboxで写真をオンラインと同期し、APIが用意されていれば</p>
+<p class="clear">・Flickrに権限を与え写真共有</p>
+<p class="clear">・<a href="http://jp.techcrunch.com/archives/extend-your-brain-with-evernote-private-beta-invites/">Evernote</a>に権限を与えておくことで画像検索</p>
+<p class="clear">・Picnikに権限を与え写真編集</p>
+<p class="clear">・基本のフロントエンドは今まで通りのアプリケーションでＯＫ（ iPhoto とか）<br /></p>
+<p class="clear">・ローカルHDDがキャッシュしているのでレスポンスもＯＫ</p>
+<p class="clear">　</p>
+<p class="clear">音楽なら</p>
+<p class="clear">・<a href="http://muxtape.com/">Muxtape</a>に権限を与え、ミックステープ化＆音楽共有</p>
+<p class="clear">・オンライン楽曲編集サービスに権限を与える</p>
+<p class="clear">・楽曲検索サービスに権限を与える</p>
+<p class="clear">・基本のフロントエンドは今まで通りのアプリケーションでOK（ iTunesとか）</p>
+<p class="clear"><br /></p>
+<p class="clear">テキストならさらに色々な二次加工・二次利用が可能だろう。</p>
+<p class="clear">個人のライフログは全てオンラインに存在して、色々なサービスへ権限を与えることで過激に面白く加工してくれるんだろう、ブラウザのアクセス履歴は<a href="http://pathtraq.com/">Pathtraq</a>へ、IMEの変換履歴は<a href="http://www.social-ime.com/">Social IME</a>へ。</p>
+<p class="clear"><br /></p>
+<p class="clear">さらに、DropboxはWebDAVと違ってユーザを待たせない、というかシンボリックリンクや同期の設定等を済ませれば</p>
+<p class="clear">普通に生活しているだけでオンラインストレージとデータが保存されている。あとはそれを見たい人 or 加工したいWebサービスへ権限を与えておくだけだ。</p>
+<p class="clear">基本的にユーザの時間を邪魔しない、これは重要だと思う。</p>
+<p class="clear"></p>
+<p class="clear"></p>
+<blockquote>
+  <p style="font: 12.0px Helvetica">インターネットでどんなサービスを使うにしても、時間をかけないではできない。だからユーザが新しいサービスを使いはじめるには、今まで使っていた何かを止めないといけないし(自分はtumblrのdashboardをみはじめてdiggを見るのを止めた)、今使っているサービスを、新しいサービスを使うために使わなくなったりする(twitterをつかいはじめてmixiをやめた、とか)。</p>
+
+  <p style="font: 12.0px Helvetica"><a href="http://ido.nu/kuma/2008/03/09/era-of-no-overhead-blogging/">ゼロオーバーヘッド・ブロギングの時代</a><br /></p>
+</blockquote>
+<p class="clear">この話を見てから、悶々と考えていたゼロオーバーヘッドなサービス、Dropboxは何気に満たしているなと思う</p>
+<p class="clear">今までもFTPを使ってファイルをサーバへアップロードすればオンラインストレージへ溜めておくことはできた、WebDAVでも良いけど、でも「全ファイル」するのはコストがかかりすぎてできなかったし誰もやろうと思わなかった。cronやスケジューラとスクリプトを頑張って書けば全自動も可能だろう、でもその手間は一般人にとって相当なコストだ。</p>
+<p class="clear">でも現実に、近い将来全データをオンラインストレージへ保存することは可能になりつつある、これはAmazon S3でストレージ容量が劇的に下がったのも大きいだろうし、その土台はHDDやメモリ・CPUのチープ革命が支えてるんだろう。</p>
+<p class="clear"><br /></p>
+
+

@@ -1,0 +1,85 @@
+---
+layout: old_post
+title: Railsでお馴染み37signalsのURLが凄い件について
+permalink: /tatsuya/show/247-rails-37signals-url
+---
+<p>37signalsのBlogはURLが凄い変だなー、どうやって実装してんの？とか思ってた。</p>
+<p>例えば：<a href="http://www.37signals.com/svn/posts/247-calling-all-basecamp-customers-in-nyc-or-chicago">
+http://www.37signals.com/svn/posts/247-calling-all-basecamp-customers-in-nyc-or-chicago</a></p>
+<p>
+これどうやってるの？わざわざidを変換するメソッドとか実装してるの？とか思ってたら、こういうことだったのか!凄い!
+<br /><a href="http://weblog.rubyonrails.com/2007/2/4/how-to-get-more-literal-urls-and-still-use-ids">Riding Rails: How to get more literal URLs and still use IDs</a>
+<br /><a href="http://jroller.com/page/obie?entry=seo_optimization_of_urls_in">Obie Fernandez : Weblog : Ruby on Rails and More...</a></p>
+
+<p>どうもRailsがidを得るときにto_paramメソッドを使っていることを利用してるみたい、↑のBlogを参考にしつつ試してみる。</p>
+
+<h3>to_paramメソッドを上書き</h3>
+<p>まず目的のクラスでto_paramメソッドを上書きする。id+"好きな文字列"を返すよう変更すればＯＫ</p>
+<pre>
+def to_param
+  "#{id}-#{title.gsub(/[^a-z0-9]+/i, '-')}"
+end
+</pre>
+<p>英語はこれで良いけど、問題は日本語のタイトルをどうURLにするか？全角からローマ字に変換するライブラリを探そうかと思ったけど、めんどくさいので英語だけ抜き出してとりあえず適当に作ってみる。</p>
+
+<pre>
+class Post &lt; ActiveRecord::Base
+  ..........
+  def to_param
+    title_english = title.gsub(/([a-z0-9]*)([^a-z0-9]*)/i, '\1 ').downcase
+    new_id = "#{id}-#{title_english.gsub(/[^a-z0-9]+/i, '-')}".chomp("-")
+    return new_id != "#{id}-" ? new_id : id
+  end
+end
+</pre>
+
+<h3>各記事へのLinkをチェック</h3>
+
+<p>RailsがURLを作るときにto_paramメソッドを呼ばせる必要があるのでlink部分をチェック。サイドバーの記事一覧とか、RSSの各記事へのリンクとか。</p>
+
+<pre>
+&lt;%= link_to "link", :action=&gt;"show", :id=&gt;@post.id %&gt; #誤：これだとpost.idの値がそのまま入る
+&lt;%= link_to "link", :action=&gt;"show", :id=&gt;@post %&gt;&nbsp;&nbsp;&nbsp; #正：post.to_param がidの値として入る
+</pre>
+
+<p>さあこれで各記事へリンクがhttp://blog.tkmr.org/tatsuya/show/194じゃなくて<br />
+http://blog.tkmr.org/tatsuya/show/194-rails-acts-as-taggableみたいになる。</p>
+
+<h3>でもそれだとPost.find(id)を修正しなきゃ</h3>
+
+<p>と思ったんだけど、RailsはInt型のカラムへ文字列の値を渡した場合、型変換のためにto_iメソッドを呼ぶらしい。そしてRubyのto_iメソッドは文字列を左端から見て数字以外に当るまでを数字として解釈する。本当！？</p>
+
+<pre>
+?&gt; post.title
+=&gt; "Subversionで\"already under version control\"が出たら"
+&gt;&gt; post.to_param
+=&gt; "16-subversion-already-under-version-control"
+&gt;&gt; post.to_param.to_i
+=&gt; 16
+&gt;&gt;
+
+&gt;&gt; Post.find("16-subversion-already-under-version-control")
+=&gt; #&lt;Post:0x38496f0 @attributes={"body"=&gt;"&lt;p&gt;subversion&lt;/p&gt;&lt;br
+</pre>
+<b>本当だ！find成功してるw！</b><br />
+<img src="http://farm1.static.flickr.com/156/381538172_8c25ba7037.jpg?v=0" alt="" height="300" width="200" style="float:none !important;"/>
+
+<p>ということで実装終了、実質書いたのはto_paramメソッド3行だけ。結果としては</p>
+
+<pre>
+<a href="http://blog.tkmr.org/tatsuya/show/245-scaffold-resource-restfull-rails-2">scaffold_resourceでRESTfullなRailsアプリ(2)</a>
+http://blog.tkmr.org/tatsuya/show/245-scaffold-resource-restfull-rails-2
+
+<a href="http://blog.tkmr.org/tatsuya/show/239-rails1-2">今更ながらRails1.2の変更点とか翻訳してみた</a>
+http://blog.tkmr.org/tatsuya/show/239-rails1-2
+
+<a href="http://blog.tkmr.org/tatsuya/show/200-xml-rpc-weblogupdates-ping">XML-RPC/weblogUpdates.pingを実装してみる</a>
+http://blog.tkmr.org/tatsuya/show/200-xml-rpc-weblogupdates-ping
+</pre>
+
+<p>URLは数字が良いかこれが良いかは議論の余地があると思うし、タイトル変更すると記事のURLが変わるのは致命的だとも思う。まあでも数字で始まる文字列ならto_iで同じ結果になるのでアプリケーション的にはＯＫ。
+</p>
+<pre>http://blog.tkmr.org/tatsuya/show/200-tatoeba-konnna-url-demo-daijo-bu-daaaaaaaaaaaaasu</pre>
+<p>またGoogle対策やSEO的にもURLにキーワードが含まれるのは良い・URLは人間が見る物だから視認性が良い、とかっていう意見も出ているみたい
+<br />厳密に言うとURLが変化する可能性があるってのはw3cとか的にＮＧかも。まぁなんでも良いや。</p>
+

@@ -1,0 +1,139 @@
+---
+layout: old_post
+title: Twitterのトラブルから見る、DB分割でスケーラブルなRailsサイト構築
+permalink: /tatsuya/show/311-twitter-db-rails
+---
+<p><a href="http://www.amazon.co.jp/gp/product/images/4873113113/ref=dp_image_0/503-2390662-3103940?ie=UTF8&amp;n=465392&amp;s=books" target="AmazonHelp" onclick="return amz_js_PopWin('http://www.amazon.co.jp/gp/product/images/4873113113/ref=dp_image_0/503-2390662-3103940?ie=UTF8&n=465392&s=books','AmazonHelp','width=700,height=600,resizable=1,scrollbars=1,toolbar=1,status=1');"><img src="http://ec1.images-amazon.com/images/P/4873113113.01._SCLZZZZZZZ_V45904014_AA240_.jpg" id="prodImage" alt="スケーラブルWebサイト" border="0" height="240" width="240"/></a></p>
+
+<p>最近、2.0な方々の間でTwitterが話題になってる。で、そのTwitter自体も面白いんだけど、TwitterについてDHHがブログを書いてRailsでの大規模サイト構築が話題になってるのが面白い。</p>
+
+<p><a href="http://www.loudthinking.com/arc/000608.html">Twitter trouble (Loud Thinking - DHH)</a>
+<br />まずTwitterの高負荷について言及、Twitterは11,000リクエスト/秒 の高負荷で問題となっているらしい。 そしてスケーラビリティの鍵はDB分割だ、と言っている。Railsは基本一つのDBを見るのでスケーラビリティの問題になる （確かにWebサーバはロードバランサがあればいくらでもスケールするしね、Sessionの共有だけ気を付ければ）</p>
+
+<p>　↓ </p>
+
+<p><a href="http://drnicwilliams.com/2007/04/12/magic-multi-connections-a-facility-in-rails-to-talk-to-more-than-one-database-at-a-time/">Dr Nic » Magic Multi-Connections: A “facility in Rails to talk to more than one database at a time”</a>
+<br />タイムリーにRailsで複数DBを使い分けるためのライブラリがリリースされる、magic_multi_connections というらしい。</p>
+
+<p>　↓</p>
+
+<p><a href="http://www.loudthinking.com/arc/000610.html">Scaling to multiple databases with Rails (Loud Thinking)</a> magic_multi_connectionsへのDHHの言及。</p>
+
+<p>ということでmagic_multi_connectionsを触ってみる、以下のように使用</p>
+
+<pre>
+#gem からインストール
+gem install magic_multi_connections
+
+#config/database.ymlを編集
+development:
+  database: hoge_master
+  timeout: 5000
+  host: localhost
+
+development_slave1:
+  database: hoge_slave1
+  timeout: 5000
+  host: localhost
+
+development_slave2:
+  database: hoge_slave2
+  timeout: 5000
+  host: localhost
+</pre>
+
+<p>DB設定準備完了、本来の意図からするとhostが全部同じなのは意味がないので複数サーバになると思う、次にconfig/environment.rbを編集</p>
+
+<pre>
+require 'magic_multi_connections'
+connection_names = ActiveRecord::Base.configurations.keys.select do |name|
+  name =~ /^#{ENV['RAILS_ENV']}_slave/
+end
+@@connection_pool = connection_names.map do |connection_name|
+  Object.class_eval &lt;&lt;-EOS
+    module #{connection_name.camelize}
+      establish_connection :#{connection_name}
+    end
+  EOS
+  connection_name.camelize.constantize
+end
+</pre>
+
+<p>development*slaveのDBを探してきて、module作成。で作成したモジュール名を付加してアクセス</p>
+
+<pre>
+ruby script/console
+&gt;&gt;Hoge.find(1)                      #hoge_master DB を検索
+&gt;&gt;DevelopmentSlave1::Hoge.find(1)   #hoge_slave1 DB を検索
+&gt;&gt;DevelopmentSlave2::Hoge.find(1)   #hoge_slave2 DB を検索
+</pre>
+
+<p>とアクセスするDBを使い分けられる。ついでにこれでランダムにアクセスも可能</p>
+
+<pre>
+ruby script/console
+&gt;&gt; def conn
+&gt;&gt;   @@connection_pool[rand(@@connection_pool.size)]
+&gt;&gt; end
+&gt;&gt; conn::Hoge.name
+=&gt; "DevelopmentSlave2::Person"
+&gt;&gt; conn::Hoge.name
+=&gt; "DevelopmentSlave1::Person"
+</pre>
+
+<p>配列に入ってるのか。。一通り触ってみると確かにDB振り替えられてるみたい。
+<br />ということで明示的にDBを切り替えるには良いじゃないか、これを利用してSelectだけSlaveを選択するModelを組めば良いかも。。と思ってた矢先に今度は別のPluginがリリースされた！<br/>
+これは acts_as_readonlyable という名前の通りの動作を行なう。DBのアクセスでSELECTのみReadOnlyDBへアクセスするらしい</p>
+
+<p><a href="http://revolutiononrails.blogspot.com/2007/04/plugin-release-actsasreadonlyable.html">Revolution On Rails: [PLUGIN RELEASE] ActsAsReadonlyable</a></p>
+<p>ということでこっちも触ってみる、もう疲れたのでざっくりと</p>
+
+<pre>
+script/plugin install svn://rubyforge.org/var/svn/acts-as-with-ro/trunk/vendor/plugins/acts_as_readonlyable
+
+#config/database.yml############
+development:
+&nbsp; adapter: mysql
+&nbsp; database: hoge_master
+&nbsp; host: localhost
+
+&nbsp; read_only:
+&nbsp;&nbsp;&nbsp; adapter: mysql
+&nbsp;&nbsp;&nbsp; database: hoge_slave
+&nbsp;&nbsp;&nbsp; host: localhost
+
+#app/model/book.rb##############
+class Book &lt; ActiveRecord::Base
+&nbsp; acts_as_readonlyable :read_only
+end
+
+#準備完了#######################
+ruby script/console
+&gt;&gt;book = Book.find(1)&nbsp; #hoge_slaveへアクセス
+=&gt; #&lt;Book:0x457683c .........
+&gt;&gt; book.title = "hoge2"
+=&gt; "hoge2"
+&gt;&gt; book.save #hoge_masterへアクセス</pre>
+
+<p>SELECT (COUNT) はread_onlyで指定したDBへアクセス、その他更新系は全てmasterへアクセスする。Master>SlaveでレプリケーションしているMySQLを想定してるんだろうか。ふーむ、使い分けの問題だろうけど自分はacts_as_readonlyableのが好きかな、スマートだしソースも判りやすい。magic_multi_connectionの方はソースいまいち良く判んないや。 しいて言うなら</p>
+
+<p><ul><li>中規模サイト : さっくりとやるなら acts_as_readonlyable</li><li>大規模サイト : masterを分割化したり凝ったことやるなら magic_multi_connection</li></ul></p>
+
+<p>という雰囲気か。でもmagic_multi_connectionの作者もreadonlyableを褒めてるみたいなので
+<br /><a href="http://drnicwilliams.com/2007/04/15/acts_as_readonlyable/">Dr Nic » “Reads -&gt; slaves, writes -&gt; master” plugin</a>
+<br />良い影響を与え合っていくと良いなと思う（・し・）</p>
+
+<p>さあ、結局この先に続くのはmixiやMySpaceなんかの大規模サイトがやっているFederateDBの道だと思う （DB一つ10万人としてUserIDを10万で割ってDB名を出す、みたいな）、冒頭で画像を張ったオライリーの<a href="http://www.amazon.co.jp/%E3%82%B9%E3%82%B1%E3%83%BC%E3%83%A9%E3%83%96%E3%83%ABWeb%E3%82%B5%E3%82%A4%E3%83%88-Cal-Henderson/dp/4873113113">スケーラブルWebサイト</a>でも「横のDB分割」って紹介されてるけど、結局DBをスケーラブルにするのって気が狂うくらい大変だと思う。そこでFadarate、これならMySQLでも適用可能、でもアプリケーション側が汚くなる諸刃の刃・・・、そこを上手くRubyの柔軟性で品良くクラスライブラリに閉じ込められれば結構良いと思う。名前は勿論 <b>acts_as_federate</b> で4649。</p>
+
+<p>（ちなみにOracleのRACを使えば楽できそうだけど、前仕事で使ってたOracleDBは、言うこと聞かなくてインスタンスが突然落ちる、とかあったしライセンス料バカ高いし・・・・むむむむむ）<a href="http://www.loudthinking.com/arc/000610.html">
+<br /></a></p>
+<p>
+追記 ： Matz日記にも Twitter＞DHH＞magic multi connectionの話が言及されてた
+<a href=" http://www.rubyist.net/~matz/20070416.html#p06">http://www.rubyist.net/~matz/20070416.html#p06</a>
+</p>
+<p>
+さらに追記 ： はてブコメントによると「11,000じゃなくて600リクエスト/秒とtwitterの中の人が言っている。」？<br />
+確かに<a href="http://www.slideshare.net/Blaine/scaling-twitter">scaling twitter</a>ていうTwitterのプレゼンテーションでは"600 request per second"って書いてあるね。失礼、そうなのか；）<br />
+ちなみに "180 Rails Instances (Mongrel) / 1 Database Server (MySQL) + 1 Slave" と書いてあるね、DBの中の人大変そう</p>
+
+

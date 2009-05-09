@@ -1,0 +1,35 @@
+---
+layout: old_post
+title: RESTリソースがスキーマを/new.xmlへのアクセスで返す
+permalink: /tatsuya/show/313-rest-new-xml
+---
+<p>GET /hoge/new.xml でRESTなリソース "Hoge" のスキーマをXMLで出力すると良いんじゃね？という話が<a href="http://groups.google.com/group/rubyonrails-core/browse_thread/thread/e36b84f9c1c3fe38">Rails Core で議論されてるらしく</a>、でscaffold_resourceのテンプレートにパッチが当ったみたい。</p>
+
+<p>パッチ：</p>
+<pre>
+&nbsp;# GET /&lt;%= table_name %&gt;/new 
+&nbsp;# GET /&lt;%= table_name %&gt;/new.xml 
+
+&nbsp;def new 
+&nbsp;&nbsp; @&lt;%= file_name %&gt; = &lt;%= class_name %&gt;.new 
+&nbsp;
+&nbsp;&nbsp; respond_to do |format| 
+&nbsp;&nbsp;&nbsp;&nbsp; format.html # new.erb 
+&nbsp;&nbsp;&nbsp;&nbsp; format.xml { render :xml =&gt; @&lt;%= file_name %&gt;.to_xml } 
+&nbsp;&nbsp; end 
+&nbsp;end
+</pre>
+
+<p>こんな出力：</p>
+<pre class="wiki">&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;user&gt;
+  &lt;active type="boolean"&gt;&lt;/active&gt;
+  &lt;created-at type="datetime"&gt;&lt;/created-at&gt;
+  &lt;email&gt;&lt;/email&gt;
+  &lt;middle-name&gt;&lt;/middle-name&gt;
+&lt;/user&gt;</pre>
+
+<p>値が空で結果としてスキーマが返ると。RESTなリソースにアクセスしたいクライアントは、とりあえず GET /hoge/new.xml へアクセスすればスキーマが判る、シームレスに繋がるWebサービスとか。良いねこれは、SOAPの100倍くらいスマートだと思う。</p>
+
+<p>言い出したのが誰かと思ったら<a href="http://giantrobots.thoughtbot.com/2007/4/26/activeresource-in-a-flurry">Jesterを作ってるEric Mill</a>だそうだ。</p>
+

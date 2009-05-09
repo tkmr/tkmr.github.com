@@ -1,0 +1,57 @@
+---
+layout: old_post
+title: second life やってみた、あとスクリプト言語について
+permalink: /tatsuya/show/334-second-life
+---
+<p>
+面白いねー操作に結構とまどうかと思ったけど、意外にすぐ慣れた。それよりも一通り操作を覚えた後に「で、なにすれば良いんだろ（・し・）」となるのがでかい・・・、いきなりあの世界に飛び込んでも何すれば良いのかイマイチ掴めない、secondlifeをやってる知り合いを先につくっとくと良いのかも、と思った。
+</p><p>
+まず、ゲーム内に翻訳エンジンをオブジェクトとして作成して無料で公開している人がいるそうなのでゲットしてきた
+<br /><a href="http://www.sec-life.com/japanese.html" title="英語版の日本語化/セカンドライフ日本語版の歩き方">英語版の日本語化 セカンドライフ日本語版の歩き方</a>
+<br />ゲーム内の仮想の翻訳エンジンを「装備」することで、本当に英←→日の翻訳ができるってのはあらためて考えるとすごいと思う、バーチャルな翻訳機だけど現実でも便利
+</p><p>
+次、AKIBAやSINJUKU・SHIBUYAなんかの日本語圏を回ってみた。でAKIBAで無料Ｔシャツゲット、早速着てみた
+<br /><img src="http://farm1.static.flickr.com/229/516057922_afe26928d8_o.jpg"/>
+<br />これで立派なAボーイ
+</p><p>
+当面の目標として手持ちの金が欲しいな、ということで何かオブジェクトを作って売りたい
+<br /><a href="http://www.forest.impress.co.jp/article/2005/12/20/dtddd.html" title="窓の杜 - 【NEWS】『ジョジョ』の雰囲気を醸し出す書き文字“ド”を表示「デスクトップドドド」">窓の杜 -『ジョジョ』の雰囲気を醸し出す書き文字を表示「デスクトップドドド」</a>
+<br />こんなの作ってみようかな、自分の後ろに「ドドド」が出る！板のオブジェクトにテクスチャを張るだけなら簡単だけど、どうせならスクリプトで動かすでしょう：）
+</p><p>
+で勉強
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Ja:Main_Page" title="Ja:Main_Page">Ja:Main Page - lslWiki</a>
+<br />second lifeではリンデンスクリプト (Linden Scripting Language)  というイベントドリブンなスクリプト言語を使用するそうだ、そしてオブジェクトはステート（状態）を保持していて、ステートに応じてイベントに対する振る舞いを変えていくと・・・
+</p><pre>state on{
+  touch_start(integer total_number){
+    llSay(0, "Hello world!!");
+    state off;
+  }
+}
+state off{
+  touch_start(integer total_number){
+    llSay(0, "Good bye world!!");
+    state on;
+  }
+}
+</pre><p>
+状態がONの場合、誰かが触ると（touch_startイベント）state をOFFに変更する
+</p><p>
+<a href="http://www.flickr.com/photos/28646244@N00/516303405/" title="Photo Sharing"><img src="http://farm1.static.flickr.com/227/516303405_c846ef9438_o.jpg" width="748" height="579" alt="Hello world LSL" /></a>
+</p><p>
+シンプルで判り易い、あとはイベントの種類と関数をリファレンスで調べていくか。
+</p><p>
+<a href="http://rpgstats.com/wiki/index.php?title=Ja:events">Ja:events - lslWiki ーイベント一覧</a>
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Ja:functions">Ja:functions - lslWiki ー関数一覧</a>
+</p><p>
+ふむふむ、ざっと見ただけだけどこんなイベントがあるのが激しく期待できる
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Dataserver">dataserver</a> 	 非同期データを受信した際に呼ばれる。
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Email">email </a>	emailを受信した際に呼ばれる。
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Http_response">http_response</a> 	llHTTPRequestリクエストのレスポンスを受信した際に呼ばれる
+<br /><a href="http://rpgstats.com/wiki/index.php?title=Remote_data">remote_data</a> 	XML-RPC 通信を受信した場合に呼ばれる any kind of XML-RPC communication 
+</p><p>
+面白そう
+</p>
+<p>
+追記：そういえば自分のアカウントはTkmr Takacsです、見かけたらどうぞお金めぐんでください。
+</p>
+

@@ -1,0 +1,51 @@
+---
+layout: old_post
+title: YahooのGUI+RSSサービス Pipes はPlaggerの夢を見るか？
+permalink: /tatsuya/show/256-yahoo-gui-rss-pipes-plagger
+---
+<p>
+YahooがPlagger+GUI風なサービス <a href="http://pipes.yahoo.com/">Pipes</a> をリリースした！詳しくは以下で</p>
+<p>
+<a href="http://jp.techcrunch.com/archives/yahoo-launches-pipes/">TechCrunch Japanese アーカイブ » Yahoo!、Pipesをローンチ</a><br />
+<a href="http://ido.nu/kuma/2007/02/08/too-easy-to-use-too-cool-to-yahoo-yahoo-pipes/">» かんたんすぎ かっこよすぎ Yahoo pipes</a><br />
+<a href="http://radar.oreilly.com/archives/2007/02/pipes_and_filte.html">O'Reilly Radar &gt; Pipes and Filters for the Internet</a>
+</p>
+<p>
+ということでPlaggerの動きも気になりつつ、試してみた。<br />前々から英語⇒日本語へRSSを翻訳してくれるサービスが欲しかったけどなかなか無い。<br /><br />ないのなら　つくってやろう　ヤフーパイプス<br /><br />ということで作り始める.............と思ったらできた！さすが楽々GUI、適当に操作を覚えながらでも数十分くらいでできた<br />
+<a href="http://flickr.com/photo_zoom.gne?id=384419433&size=o">
+<img src="http://farm1.static.flickr.com/133/384419433_74265c5725.jpg?v=0" alt="" height="292" width="500" style="float:none !important;"/>
+</a>
+<br />
+<ol><li>URLを入力(GET引数）</li><li>RSSフィード読み込み（二つ）</li><li>BabelFish翻訳モジュール</li><li>ユニオンで結合（日英両方欲しいので）</li><li>記事の投稿日付順にソート</li><li>出力</li></ol>
+<p>
+さあ保存して実行。試しにdiggのフィードを読み込んでみる。当然元は英語だけど...
+</p>
+<p>
+<a href="http://pipes.yahoo.com/pipes/PvRXEAy42xGpUKaEdbq02Q/run?urlinput1=http%3A%2F%2Fdigg.com%2Frss%2Fcontainertechnology.xml&amp;_render=rss" style="white-space:normal !important;">
+http://pipes.yahoo.com/pipes/PvRXEAy42xGpUKaEdbq02Q/run?urlinput1=http%3A%2F%2Fdigg.com%2Frss%2Fcontainertechnology.xml&amp;_render=rss</a><br  />
+</p>
+<p>
+KITA! ばっちしだね、例えばYahooPipesに関するdiggはこんな感じ
+</p>
+<blockquote><div class="e"> <div class="c" style="margin-left: 1em; text-indent: -2em;"><a class="b" onfocus="h()" onclick="return false" href="#">-</a> <span class="m">&lt;</span><span class="t">item</span><span class="m">&gt;</span></div> <div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">title</span><span class="m">&gt;</span><span class="tx">Yahoo! 管は生きている!</span><span class="m">&lt;/</span><span class="t">title</span><span class="m">&gt;</span> </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">link</span><span class="m">&gt;</span><span class="tx">http://digg.com/tech_news/Yahoo_Pipes_is_LIVE</span><span class="m">&lt;/</span><span class="t">link</span><span class="m">&gt;</span>  </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">description</span><span class="m">&gt;</span><span class="tx">管は供給をremix 、視覚プログラミング環境の新しいデータmashups  を作成することを可能にする催されたサービスである。サービスの名前はプログラマーがコマンド・ラインで簡単な実用性を一緒に鎖でつなぐことを容易にすることによって驚くほど利発な事をすることを可能にするUnix  の管に捧げ物を支払う。</span><span class="m">&lt;/</span><span class="t">description</span><span class="m">&gt;</span> </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">pubDate</span><span class="m">&gt;</span><span class="tx">Thu, 8 Feb 2007 18:20:04 GMT</span><span class="m">&lt;/</span><span class="t">pubDate</span><span class="m">&gt;</span> </div></div> <div><span class="b">&nbsp;</span> <span class="m">&lt;/</span><span class="t">item</span><span class="m">&gt;</span></div></div></div><div class="e"> <div class="c" style="margin-left: 1em; text-indent: -2em;"><a class="b" onfocus="h()" onclick="return false" href="#">-</a> <span class="m">&lt;</span><span class="t">item</span><span class="m">&gt;</span></div> <div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">title</span><span class="m">&gt;</span><span class="tx">Yahoo! Pipes is LIVE!</span><span class="m">&lt;/</span><span class="t">title</span><span class="m">&gt;</span> </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">link</span><span class="m">&gt;</span><span class="tx">http://digg.com/tech_news/Yahoo_Pipes_is_LIVE</span><span class="m">&lt;/</span><span class="t">link</span><span class="m">&gt;</span>  </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">description</span><span class="m">&gt;</span><span class="tx">Pipes is a hosted service that lets you remix  feeds and create new data mashups in a visual programming environment. The name  of the service pays tribute to Unix pipes, which let programmers do  astonishingly clever things by making it easy to chain simple utilities together  on the command line.</span><span class="m">&lt;/</span><span class="t">description</span><span class="m">&gt;</span> </div></div> <div class="e"> <div style="margin-left: 1em; text-indent: -2em;"><span class="b">&nbsp;</span> <span class="m">&lt;</span><span class="t">pubDate</span><span class="m">&gt;</span><span class="tx">Thu, 8 Feb 2007 18:20:04 GMT</span><span class="m">&lt;/</span><span class="t">pubDate</span><span class="m">&gt;</span> </div></div> <div><span class="b">&nbsp;</span> <span class="m">&lt;/</span><span class="t">item</span><span class="m">&gt;</span></div></div></div></blockquote> 
+<p>
+操作は本当に簡単、ドキュメントとか調べるよりも触った方が早い。でも自由度はPlaggerが数段上だ（Pipesはコード書けないんだから当然だけど）、基本既存のモジュールを組み合わせることしかできないし、当然ピザの注文もできない。
+</p><p>
+Plaggerのmiyagawaさんも<a href="http://bulknews.typepad.com/blog/2007/02/yahoo_pipes_dre.html">早速反応してるけど</a>これでPlaggerの功績が薄れるとすれば悲しい事だと思う、はっきり言ってPlaggerの方がよりキュートで美しく楽しい、PipesがプラモデルだとすればPlaggerはプラモデルのパーツ整形キットってくらい違う、PipesをRPGツクールとすればPlaggerはスクウェアなんかが使っている開発環境ってくらい違う、PlaggerをレゴブロックだとすればPipesは<a href="http://images.google.co.jp/images?hl=ja&amp;client=firefox&amp;rls=org.mozilla:ja:official&amp;q=%E3%83%80%E3%82%A4%E3%83%A4%E3%83%96%E3%83%AD%E3%83%83%E3%82%AF&amp;btnG=Google+%E6%A4%9C%E7%B4%A2&amp;lr=lang_ja&amp;ie=UTF-8&amp;oe=UTF-8&amp;sa=N&amp;tab=wi">ダイヤブロック</a>だってくらい違う、あれ？あんまり違わないか？
+</p><p>
+でもRPGツクールで作ったゲームを世界中で共有できて、好きなようにさらにカスタマイズできれば面白いことが起こる可能性もある、これはPipes上手いと思う
+</p><p>
+誰かが作った公開Pipeを探す-&gt;モジュールとして読み込み-&gt;カスタマイズした物をさらに公開して共有 </p><p>
+てのが自然にできてる、さらにクールなGUI、CPANインストール不要のWEBサービス、これに独自モジュールをPerlやRubyなんかで作成する機能さえ加われば面白いことになるとも思う。ここでPlaggerが打つべき手はPlaggerのUIとしてPipesを活用することじゃないだろうか？Liverdoor ReaderをPlaggerのUIにしたように
+</p><p>
+<a href="http://subtech.g.hatena.ne.jp/miyagawa/20060509/1147150987">subtech - Bulknews::Subtech - [Plagger] Livedoor Reader Frontend</a>
+</p><p>
+確かなことは全然言えないけど、FireBugで見ると普通にAjax (JSONだ） をやってるみたいだし、全く不可能では無い。まさに<a href="http://la.ma.la/blog/diary_200506291043.htm">最速の人</a>の↓このエントリが現実となりそうだ
+</p><p>
+<a href="http://la.ma.la/blog/diary_200506291043.htm">最速インターフェース研究会 :: XMLはメタデータというより生データとしての利用価値が高まりつつあり、AjaxによるUIの切り離しがそれを加速する</a>
+</p><p>
+PipesのUIはクールだ、でもバックエンドはPlaggerの方がクールだ、それならUIだけPipesを使うのは全然ありだろう。こんな芸当はwebアプリケーションにしかできない、世界はどんどんwebのあちら側へ・オープンな方向へ流れて行って欲しいなあとLivedoorReaderに翻訳したdiggフィードを登録しながら思った。</p>
+<p>
+<a href="http://blog.tkmr.org/tatsuya/show/265-yahoo-pipes-plagger-greasemonkey-1">続きへ</a>
+</p>
+

@@ -1,0 +1,46 @@
+---
+layout: old_post
+title: Railsプラグイン - ActiveJaxの密結合な実装にビックリ
+permalink: /tatsuya/show/408-rails-activejax
+---
+<p>ActiveJaxというRailsプラグインを見つけた</p>
+<p><img src="http://gyazo.com/004933cf1afafbab2c94d84753a27cc6.png" /></p>
+<p><a href="http://rails.simpltry.com/active_jax.html">ActiveJax - Simpltry Rails</a></p>
+<p>「ActiveRecordのモデルをJavaScriptから叩ける」と書いてあり、RESTなWebAPIを叩く<a href="http://giantrobots.thoughtbot.com/2007/4/2/jester-javascriptian-rest">Jester</a>の競合になりそうかな、と思ったら全然違った。</p>
+<p><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript">Jester-RESTfullなRails向けJavaScriptライブラリ</a></p>
+<p>Jesterの場合はあくまでもRESTなWebAPIに向かって、それっぽいURLでアクセスする。Railsのscaffold resourceで作られたWebAPIを想定してるけど、細かくカスタムも可能で別にPerlでもPHPでもJava, C# 相手は何でも良い。</p>
+<p>ActiveJaxの場合は、ActiveRecordモデルの構造を見て動的にJavaScriptを作成しちゃう。こんな感じ</p>
+<pre class="source">
+<span class="comment">#Model</span>
+<span class="keyword">def</span> _active_jax_meta()
+  @@active_jax_meta.values.each <span class="keyword">do</span> |ajc|
+    <span class="keyword">if</span> ajc[<span class="sym">:finders</span>].empty?
+      ajc[<span class="sym">:finders</span>] =  ajc[<span class="sym">:class</span>].public_methods.select { |m| m.match(<span class="regex">/\Afind/</span>)  }.reject { |m| ajc[<span class="sym">:class</span>].superclass.respond_to?(m) &amp;&amp; !m.match(<span class="regex">/\Afind\Z/</span>) &amp;&amp; !m.match(<span class="regex">/\Afind_all\Z/</span>) }
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+  @@active_jax_meta
+<span class="keyword">end</span>
+<span class="comment">#Controller</span>
+<span class="keyword">def</span> js
+  response.headers[<span class="str">"Content-Type"</span>] = <span class="str">"text/javascript"</span>
+  Dir.glob(File.join(RAILS_ROOT, <span class="str">"app"</span>, <span class="str">"models"</span>) + <span class="str">"/**/*.rb"</span>).each { |f| require f }
+  Dir.glob(File.join(RAILS_ROOT, <span class="str">"app"</span>, <span class="str">"controllers"</span>) + <span class="str">"/**/*.rb"</span>).each { |f| require f }
+<span class="keyword">end</span>
+<span class="comment">#View  </span>
+&lt;% ActiveRecord::Base._active_jax_meta.keys.each <span class="keyword">do</span> |klass| -<span class="str">%&gt;</span>
+<span class="str">  ActiveJax.&lt;%= klass.name.to_s -%&gt;</span> = {};
+  &lt;% klass.active_jax_finders.each <span class="keyword">do</span> |finder| -<span class="str">%&gt;</span>
+<span class="str">    ActiveJax.&lt;%= klass.name.to_s -%&gt;</span>.&lt;<span class="str">%= finder -%&gt; =</span> ActiveJax.query_function(<span class="str">"/active_jax/service"</span>, {klass: <span class="str">"&lt;%= klass.name.to_s -%&gt;"</span>, finder:<span class="str">"&lt;%= finder -%&gt;"</span>});
+  &lt;% <span class="keyword">end</span> -<span class="str">%&gt;</span>
+<span class="str">&lt;% end -%&gt;</span>
+</pre>
+<p>「俺はRailsさえあれば良い！ペロカパ！」って人はこれでも良いんだろうけど、なんだこれ。ある意味凄い、ビックリ。Jesterと比べるとこんな感じ</p>
+<p>　・Jester = RESTfullなWebAPIを作ってくれれば、空気を読んでそれっぽいURIにアクセスするよ。カスタムも可能。サーバのことは知らない</p>
+<p>　・ActiveJax = ActiveRecordのクラス名やメソッドを解析して、それっぽいJavaScriptのオブジェクトを出力するよ。ControllerやViewは自動生成するから気にしないで；)</p>
+<p>みたいな。JesterみたいにWebAPIでサーバ &amp; クライアントが分かれていると</p>
+<p>　・クライアント= Jester以外のライブラリから叩く、API公開して色々叩いてもらう</p>
+<p>　・サーバ = 重い機能をRails以外で書き直す</p>
+<p>と粗結合になって色々おいしい事がある。例えばの話で、はてブWebAPI用に作ったJavaScriptのUIでdel.icio.usを叩けたりする、Tumblr用のツールでsoup.ioが叩けたりする。（WebAPIが似ていれば）</p>
+<p>まあ明らかに書き捨てのWebアプリケーションとかなら、ActiveJax的な密結合も楽で良いけど。ちゃんとするなら、ちょっと面倒でも粗結合が良い、まあ当然の話で。</p>
+
+

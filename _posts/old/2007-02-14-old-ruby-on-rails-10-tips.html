@@ -1,0 +1,14 @@
+---
+layout: old_post
+title: Ruby on Railsのパフォーマンス向上に関する10のtips
+permalink: /tatsuya/show/268-ruby-on-rails-10-tips
+---
+<p>という記事があった、色々と面白かったので訳してみる。良いとこも悪いとこもあると思うけど参考までにメモとして</p>
+
+<p>元記事：<a href="http://antoniocangiano.com/articles/2007/02/10/top-10-ruby-on-rails-performance-tips">Top 10 Ruby on Rails performance tips</a></p>
+
+<ol><li>Rubyの基本的なコードを見直してみる</li><ol><li>自分で作ったクラスよりもできるだけ組み込みのクラスライブラリを使う</li><li>できるだけ正規表現を使用する、文字列処理にコストの高いループは避ける</li><li>REXMLは遅いので<a href="http://libxml.rubyforge.org/">Libxmlライブラリ</a>を使用する （Cで書かれたXMLパーサ<a href="http://d.hatena.ne.jp/omochist/20061023/1161614204">らしい</a>、環境に依存するのは嫌かもしれない）</li><li>if文の多用は避ける、例えば||=を使う ( z||="none" で unless(z){ z = "none" })</li><li>Hashはコストが高いので他のデータ構造を検討してみる （でも使いたいときあるよね？）</li></ol><li>キャッシュを有効活用する
+<br /></li><ol><li><a href="http://errtheblog.com/post/27">acts_as_cached</a> でModelをキャッシュ化してみる<a href="http://errtheblog.com/static/pdfs/memcached.pdf">(PDF資料)</a> (賛成。acts_as_cached楽しい）</li><li>セッションの管理には<a href="http://wiki.rubyonrails.com/rails/pages/MemCached">MemCacheStore</a>（memcachedにSessionを入れるべきか？論争の元。ケースバイケースだと思う）
+<br /></li><li>ページのキャッシュを行なう、また<a href="http://rubyforge.org/forum/forum.php?forum_id=10022">extended_fragment_cache </a>Pluginを試してみる（知らんかった&lt;% cache("/x/y/z") do %&gt;&lt;% end %&gt;とやってブロックの単位でキャッシュできるのかな？)</li></ol><li>データベースへの直接アクセスを行う</li><ol><li>パフォーマンスが必要な部分ではActiveRecord経由ではなく、直接DBへアクセスを行なう。またストアドプロシージャ等DB特有機能の使用を検討する。Railsではデータがネックになる場合が多いので非常に有効 （でもできるだけやりたくないと思う・・・まあ必要になれば）</li></ol><li>findメソッドに注意する</li><ol><li>findメソッドはパワフルだけど基本SELECT * FROMなので場合によっては:selectで必要なカラムだけ読み込む、また:limitや:offsetを活用する</li><li>MyModel.find_by_* みたいな記述は読みやすく書きやすいけどパフォーマンスは悪い。普通のfindの方が良い。さらにfind_by_sqlのが良い。（まあシビアな所でなければ良いと思う）</li></ol><li>ActiveRecordで複数の処理を行なうとき（複数件を繰り返し処理等）はtransactionで囲う。Quote.transaction do ....... endの様に（一括してSQL投げるのかな？あとで試す）</li><li>Controllerについて、filterはコストが高いので多用しない、またインスタンス変数は必要な物にしぼる。</li><li>View内でHTMLを積極的に使用する</li><ol><li>ヘルパーを使わず直にHTML書いた方が処理が軽い、デザイナーと共同作業する場合などRubyのコードよりHTMLが多い方が喜ばれる （個人的にはヘルパーを多用したほうが変更に強くなって良いと思うけど、ケースバイケースですな）</li></ol><li>Logのレベルを下げる</li><ol><li>Logger::DEBUG等はLog出力にパフォーマンスが持っていかれる。</li></ol><li>Rubyに<a href="http://rubyforge.org/projects/railsbench/">ガベージコレクションのパッチ</a>を当てる （リンクが間違っているきがする、まあ参考程度に）</li><li>これらの最適化を無駄にやりすぎないでください （本当にパフォーマンスが必要になってから真剣に考える、でも良いと思う）
+<br /></li><ol><li>Last minute changes and tweaks are possible but less desirable than a “performance aware” style of coding. <a href="http://ruby-prof.rubyforge.org/">Profile</a> your applications, <a href="http://rubyforge.org/projects/railsbench">benchmark them</a> and have fun experimenting.（railsbenchとruby-prof？力尽きた）</li></ol></ol>
+

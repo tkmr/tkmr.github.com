@@ -1,0 +1,31 @@
+---
+layout: old_post
+title: シェルスクリプトからFireFoxを操作するFresno
+permalink: /tatsuya/show/371-firefox-fresno
+---
+<p>
+via <a href="http://malblue.tumblr.com/post/10996190">Tumblr</a>
+</p><p>
+<a href="http://simile.mit.edu/wiki/Fresno">Fresno - SIMILE</a>
+</p><p>
+MozReplでFireFoxをtelnet待ち受け状態して、シェルスクリプトから同じくtelnetで繋いで操作しちゃうらしい。
+<br />面白いこと考えるなー・・
+</p><pre>
+fresno -p "http://yahoo.com"
+</pre><p>
+-p でページを開いたり
+</p><pre>
+fresno -c -j "alert('Hello world')"
+</pre><p>
+-c -j で今見てるページに対して、JavaScriptを実行できる。
+</p><p>
+今見てるエロサイトの画像をダウンロードするのも
+</p><pre>
+fresno -c -j "document.body.innerHTML" | grep img \
+| ruby -Ke -e 'puts gets.scan /src="([^"]*)"/' | xargs wget
+</pre><p>
+みたいにワンライナーでお手軽。フルパスじゃなかった場合、とか色々あるけど。
+</p><p>
+実用的かと言われるとそうでもないけど、面白い。
+</p>
+

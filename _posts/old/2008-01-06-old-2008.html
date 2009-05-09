@@ -1,0 +1,30 @@
+---
+layout: old_post
+title: 2008年書き初め
+permalink: /tatsuya/show/410-2008
+---
+<p>今年の書き初めはJavaScripでSchemeっぽい物、70行くらいで書き捨て。置く所が無かったのでAppJetに置いた。</p>
+<p><a href="http://tk-scheme.appjet.net/">http://tk-scheme.appjet.net/</a></p>
+<p>AppJetは第三者の書いたコードを気軽に読み込み&amp;実行できるのが良いな、eval(wget("http://hogehoge"))とか。最悪悪いコードが入って来ても困るのはappjet.netだし；D<br /></p>
+<p>"第三者のコードを気軽に実行できる" ってことで何か面白いことができないかな。</p>
+<p>例えば、GoogleのMapReduceを独自にオープン／分散／P2Pで実現しようと思うと、まずネックなのが（色々あるけど）実行ロジックをworkerへ送り込む方法だと思う。</p>
+<blockquote>
+  <p><a href="http://blog.yappo.jp/yappo/archives/000549.html">GoogleのMapReduceをいまさら妄想した - YappoLogs</a></p>
+
+  <p>実際問題としてオレオレでMapReduce作る時に考える事は、データとコードを各worker serverに送る仕組みを真っ先に考えなければいけない。単純にjobを分散出来た所で、それはMQとかに毛が生えた程度の面白さしかないから</p>
+</blockquote>
+<p>worker群がいて、そこへロジックと処理すべきデータを送り込む。データは良い、でもロジックはセキュリティとパフォーマンスの懸念が常にあって "絶対安全" というのが難しい、と思ってたけど実際こうやってAppJetが動いているのをみると、何とかなるかなと思ってくる。AppJetの場合サーバサイドJavaScriptを多分Rhinoとかで動かしてると思うんだけど、パフォーマンスのチェックとかはどうやってるんだ。</p>
+<p><a href="http://jp.techcrunch.com/archives/appjet-makes-simple-web-apps-a-breeze/">TechCrunch Japanese - AppJet、シンプルなウェブアプリ制作を簡単に</a></p>世界中のPCの空きCPUを有効利用するのに、SETI@homeも面白いと思うけどオープンなMapReduceをやると面白いと思うんだけどな。今後放っといても絶対オープンにならない物だけに。<br />
+<blockquote>
+  <p>新入社員がグーグルの発想のスケールに慣れるまでに数カ月はかかるという。「ある日、誰かが、数千台のコンピューターを一斉にぶん回すような“ヤバイ”仕事を考えつく。すると“ヤツは分かってきたみたいだな”ということになる」</p>
+
+  <p><a href="http://business.nikkeibp.co.jp/article/world/20071221/143754/">http://business.nikkeibp.co.jp/article/world/20071221/143754/</a></p>
+</blockquote>
+<p>こんな面白そうな話、放っとくのは勿体ない。</p>
+<p>で、あまり関係ないけどSchemeっぽい物を書き始めたけど、なんか違うな。Scheme on JavaScriptならもっとちゃんとしたのがあるし</p>
+<p><a href="http://mono.kmc.gr.jp/~yhara/w/?BiwaScheme">BiwaScheme</a></p>
+<p>なんだろ、(map 実行ロジック データリスト) と書いてmapが並列に分散する様な。いっそこんな感じにJavaScriptの配列で良いんじゃないか</p>
+<p style="font-size:130%;"><a href="http://scm-test.appjet.net/?code=[scm.map,%20function(n){return%20n*n;},%20[10,%2020,%2030,%2040]]">[scm.map, function(n){return n*n;}, [10, 20, 30, 40]]</a></p>
+<p>上手くまとまんない、もうちょっと考えてみよう。</p>
+
+

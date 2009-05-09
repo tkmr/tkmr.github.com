@@ -1,0 +1,47 @@
+---
+layout: old_post
+title: RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点
+permalink: /tatsuya/show/320-rest-javascript-jester-ver-1-2
+---
+<p>
+<a href="http://giantrobots.thoughtbot.com/2007/4/30/jester-1-2-flexible-rest">Jester早速Ver 1.2出てたね</a>、変更点をメモ
+</p><p>
+1) findがオプションでパラメータを受け付け、GETのクエリーストリングとして渡すように変更。
+</p><pre class="source">
+&gt;&gt;&gt; User.find(<span class="str">"all"</span>, {admin: <span class="keyword">true</span>, toys: <span class="num">5</span>})
+GET http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/users.xml?admin=<span class="keyword">true</span>&#38;toys=<span class="num">5</span>
+</pre><p>
+2) あわせてAjax用のコールバック関数も少し変更。三番目の引数としてハッシュを入れる、PrototypeのAjax.Requestと同じ形式でOK
+</p><pre class="source">
+&gt;&gt;&gt; User.find(<span class="str">"all"</span>, {admin: <span class="keyword">true</span>, toys: <span class="num">5</span>}, {onSuccess: success, on404: notFound})
+GET http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/users.xml?admin=<span class="keyword">true</span>&#38;toys=<span class="num">5</span>
+</pre><p>
+3) Base.model()もパラメータ少し変更、ハッシュで渡す
+</p><pre class="source">
+Base.model(<span class="str">"User"</span>, {plural: <span class="str">"people"</span>, prefix: <span class="str">"http://www.thoughtbot.com"</span>})
+</pre><p>
+4) /リソース名/new.xml にアクセスしてオブジェクトの定義を取得するように変更。<a href="http://blog.tkmr.org/tatsuya/show/313-rest-new-xml">Rails</a><a href="http://blog.tkmr.org/tatsuya/show/313-rest-new-xml">側のこのパッチの件を反映</a>
+</p><pre class="source">
+&gt;&gt;&gt; eric = User.build({}, {checkNew: <span class="keyword">true</span>})
+GET http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/users/new.xml
+
+&gt;&gt;&gt; eric._properties
+[<span class="str">"active"</span>, <span class="str">"email"</span>, <span class="str">"name"</span>]
+</pre><p>
+5) 日付形式のデータは暗黙的にDateオブジェクトへ変換する
+</p><pre class="source">
+&gt;&gt;&gt; post.created_at
+Sat Mar <span class="num">31</span> <span class="num">2007</span> <span class="num">03</span>:<span class="num">01</span>:<span class="num">56</span> GMT<span class="num">-0500</span> (Eastern Standard Time)
+</pre><p>
+6) オブジェクト作成後、サーバ側で変更があった場合（XMLが帰ってきた場合）読み込みReloadするように変更
+</p><pre class="source">
+&gt;&gt;&gt; eric = User.create({email: <span class="str">"emill@thoughtbot.com"</span>, name: <span class="str">"Eric Mill"</span>})
+POST http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/users.xml
+<span class="comment">#</span><span class="comment">結果として帰ってきた</span><span class="comment">XML</span><span class="comment">で</span><span class="comment">Reload</span>
+
+&gt;&gt;&gt; eric.new_parameter
+<span class="str">"create_by_server"</span>
+</pre><p>
+JSONの読み込みをサポートしていないようなので組み込んでみようかと思ったけど、「次期バージョンで組み込む予定だ」と言ってるね。
+</p>
+

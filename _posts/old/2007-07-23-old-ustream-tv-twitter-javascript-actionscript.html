@@ -1,0 +1,53 @@
+---
+layout: old_post
+title: UStream.tvとtwitterでニコニコ動画ってみた、あとJavaScript→ActionScriptブリッジの更新
+permalink: /tatsuya/show/362-ustream-tv-twitter-javascript-actionscript
+---
+<p>
+追記：デモページTwitterとUstream.tv のアカウントは切り替えれるようにした。
+</p><p>
+<a href="http://www.flickr.com/photos/28646244@N00/871409256/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1013/871409256_ef6b84cc51_o.png" width="757" height="771" alt="Picture 5" /></a>
+</p><p>
+このエントリの続き
+</p><p>
+<a href="http://blog.tkmr.org/tatsuya/show/359-javascript-actionscript">JavaScript </a><span style="font-family:serif;"><a href="http://blog.tkmr.org/tatsuya/show/359-javascript-actionscript">→</a></span><a href="http://blog.tkmr.org/tatsuya/show/359-javascript-actionscript"> ActionScript なオブジェクトブリッジを作ってみた</a>
+</p><p>
+最近もっぱらActionScript勉強中なのですが、JavaScriptオブジェクトをActionScriptから叩けると楽しいのじゃないか、と思ってオブジェクトブリッジ作成中な訳です。で実際何が便利かと考えたら、まあJSONPかなぁと。やっぱActionScriptでもJSONPでクロスドメインのデータとってきたいじゃない、人間だもの。
+</p><p>
+で一つサンプルを作ろうと思ってネタ探ししてたら、なんか<a href="http://www.ustream.tv/">ustream.tv</a>ってのが面白そうじゃないか。<a href="http://www.ustream.tv/">ustream.tv</a>一言でいうと「ウェブカメラの映像をストリーミング放送できて俺TV局が作れる」というサービス。でこれが面白い。眺めてると「良い大人がTV見たりゲームしたりする姿の何が面白いのか」という疑問も吹き飛ぶ。でそのustream.tvを眺めてると、ちらほらTwitterで同じチャンネルを見てると思わしき人からの発言（つっこみ）が飛び交ってる、これニコニコ動画風にすると面白いんじゃね？と思ってざっくり作ってみた。
+</p><p>
+<a href="http://blog.tkmr.org/as2js-test.html?twitter=otsune&amp;ustream=otsune">http://blog.tkmr.org/as2js-test.html?twitter=otsune&#38;ustream=otsune</a>
+<br /><strong>追記；</strong><strong>Twitter </strong><strong>と</strong><strong> Ustream.tv</strong><strong>のアカウントは別にしました。引数がそれぞれ対応しています。</strong>
+</p><p>
+URLのアカウント名を色々変えてみると楽しいかも。というか勝手ながら↑のotsuneチャンネルが面白い、非常に面白い。<a href="http://twitter.com/yheld/statuses/162707242">この発言</a>に激しく同意。
+</p><p>
+・クエリーストリングの "name" をustream.tvとTwitterのアカウント名とする
+<br />・<a href="http://blog.bulkneets.net/misc/ustream/channel2json.pl?channel_name=mala,holygrail">最速の人作成の</a><a href="http://blog.bulkneets.net/misc/ustream/channel2json.pl?channel_name=mala,holygrail">API</a>を使わせてもらった、対象ustream.tvのFlash読み込み
+<br />・JSONPでTwitterから対象のfriend_timelineを取得
+<br />・ustream.tvの上にTwitterを流す
+</p><p>
+本当はpublic_timelineから "@名前" を検索して流そうかと思ったけど、面倒なのでやってない。気が向いたらやるかも。あと普通に使えそうなのでJavaScriptオンリーで書き直すかも。
+</p><p>
+あとJSONを読み込む処理を、無駄にActionScriptで書いてるのが今回の目的だったりする
+</p><pre class="source">
+var document<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"document"</span>);
+var div<span class="sym">:AS2JS</span> = document.getElementById(<span class="str">"hoge"</span>);
+var script<span class="sym">:AS2JS</span> = document.createElement(<span class="str">"script"</span>);
+script.src = <span class="str">"http://twitter.com/statuses/friends_timeline/"</span>+twitter.user_name+<span class="str">".json?callback=twitterCallback&#38;count=30"</span>;
+script.type = <span class="str">"text/javascript"</span>;
+script.charset = <span class="str">"utf-8"</span>;
+div.appendChild(script);
+</pre><p>
+コールバック関数も無駄にActionScriptから用意してみたり
+</p><pre class="source">
+var window<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"window"</span>);
+window.eval(<span class="str">"function twitterCallback(obj){ document[\"as\"].twitterOnLoad(AS2JS.JStoSimpleObject(obj)); }"</span>);
+</pre><p>
+激しく汚いけどソースも一応貼っておく＞ <a href="http://blog.tkmr.org/tkmr/JSTest.as">http://blog.tkmr.org/tkmr/JSTest.as</a>
+</p><p>
+うーん、どうもFireFox以外で上手く行かない。。
+<br />・クロスブラウザ対応（FireFoxで開発&#38;動作確認中）
+<br />・ActionScriptのガベージコレクトのイベントをフックして、JavaScript側に一時保存してるオブジェクトを掃除（Javaで言うファイナライザ、無理？）
+<br />課題だな。
+</p>
+

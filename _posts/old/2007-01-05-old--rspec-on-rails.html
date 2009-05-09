@@ -1,0 +1,93 @@
+---
+layout: old_post
+title: 正月も明けたのでRSpec on Railsを使ってみるテスト
+permalink: /tatsuya/show/177-rspec-on-rails
+---
+<p>正月も明けたのでRSpecを使ってみる！</p>
+
+<p>１．セットアップ
+<br />まずrspecをインストール、gemなので簡単</p>
+
+<pre>
+gem install rspec -v 0.7.4 (rspec on railsの0.7.5が上手く行かないので0.7.4を。なんでだろ？）
+</pre>
+
+<p>Rails用のプラグインをインストール</p>
+
+<pre>
+./script/plugin install svn://rubyforge.org/var/svn/rspec/tags/REL_0_7_4/vendor/rspec_on_rails/vendor/plugins/rspec
+</pre>
+
+<p>でspecディレクトリ以下に諸々のファイルを作成する、らしい。</p>
+
+<pre>
+./script/generate rspec
+</pre>
+
+<p>２.試しにmodel "User" のspecを作ってみる</p>
+
+<pre>
+./script/generate rspec_model user
+
+  # create  spec/fixtures/users.yml
+  # create  spec/models/user_spec.rb
+</pre>
+
+<p>認証のspecとfixtureを書いてみる</p>
+
+<pre>
+  users.yml
+  ----------------------
+  hoge:
+    id: 1
+    name: hoge
+    password: hoge
+
+  user_spec.rb
+  ----------------------
+  specify "login is ok" do
+    User.new({:name=>"hoge", :password=>"hoge"}).should_try_to_login()
+  end
+</pre>
+    
+<br />実行してみる
+
+<pre>
+./script/rails_spec_server　（別ターミナルで立ち上げておく）
+./script/rails_spec spec/models/user_spec.rb
+
+.F
+
+1)
+'User class with fixtures loaded login is ok' FAILED
+#<User:0x6867e68 @attributes={"name"=>"tatsuya", "id"=>"1", 
+./spec\models\user_spec.rb:11:
+
+Finished in 0.071 seconds
+
+2 specifications, 1 failure
+</pre>
+
+<p>むー失敗....。まあ動いたのでＯＫですな。</p>
+
+<p>追記：
+<br />直したら成功したお。</p>
+
+<pre>
+./script/rails_spec spec/models/user_spec.rb
+
+..
+
+Finished in 0.12 seconds
+
+2 specifications, 0 failures
+</pre>
+
+<p>#rakeで実行する場合、全体・コントローラ・モデルの順に</p>
+
+<p>rake spec
+<br />rake spec:controllers
+<br />rake spec:models</p>
+
+<p>とかでできるらしい。</p>
+

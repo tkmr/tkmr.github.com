@@ -1,0 +1,96 @@
+---
+layout: old_post
+title: Six ApartのRelationship Update Streamをグラフ描画してみた
+permalink: /tatsuya/show/402-six-apart-relationship-update-stream
+---
+<p>
+<a href="http://alpha.mixi.co.jp/blog/?p=103">mixiエンジニアブログ</a>で知ったのですが、Six ApartがWebサービスのソーシャルデータ共有のために <a href="http://updates.elsewhere.im/">Relationship Update Stream </a>という実験を始めたそうですね。
+</p><p>
+詳細は先ほどのSix Apart公式サイトやmixiエンジニアブログを見て頂くとして、ざっくり言うと「ソーシャルな情報を扱うWebサービスで、人と人の関係に変化が合った場合（フレンドになった等）Six Apartへ通知、溜まったデータは自由に共有・利用できる」という物らしい。データ取得はGETで <a href="http://updates.elsewhere.im/atom-stream.xml">http://updates.elsewhere.im/atom-stream.xml</a> へアクセス、データ更新はOAuthで認証した後AtomFeedをPUTするだけとシンプル。
+</p><p>
+手始めにGraphvizでグラフ描画してみました。
+</p><p>
+<img src="http://farm3.static.flickr.com/2044/1748372931_65963975e6_o.png" width="900" height="609" alt="rel_test" />
+</p><p class="clear">
+以下、手順メモ
+<br />まずGETでデータ取得、GETリクエストするとデータがストリームで流れ続けるというのが面白い。でもちょっと試すには使いづらいのでファイルに落とした
+</p><pre class="source">wget http<span class="sym">:/</span>/updates.elsewhere.im<span class="regex">/atom-stream.xml</span>
+</pre><p>
+試しに10分くらい落としてみた。あとは普通にファイルなので下記のようなRubyスクリプトで解析、一応ストリームを意識してREXML::Parsers::StreamParserで解析してみた（HTTPでストリーム的にデータを読み込む、とかRubyでどうやるの？TCPSocket使って実装するのかな）
+</p><pre class="source">
+require <span class="str">'rexml/parsers/streamparser'</span>
+require <span class="str">'rexml/parsers/baseparser'</span>
+require '<span class="str">rexml/streamlistener'</span>
+
+<span class="keyword">class</span> RUSListener
+  include REXML::StreamListener
+  attr_accessor <span class="sym">:relation</span>, <span class="sym">:name_map</span>
+  
+  <span class="keyword">def</span> initialize
+    @relation = {}
+    @name_map = {}
+    @current = []
+  <span class="keyword">end</span>
+  
+  <span class="keyword">def</span> tag_start(name, attributes)
+    <span class="keyword">if</span> name==<span class="str">"link"</span> &#38;&#38; attributes[<span class="str">"rel"</span>]==<span class="str">"related"</span>
+      @current &lt;&lt; attributes[<span class="str">"href"</span>]
+      @name_map[attributes[<span class="str">"href"</span>]] = attributes[<span class="str">"title"</span>] <span class="keyword">unless</span> @name_map[attributes[<span class="str">"href"</span>]]
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+
+  <span class="keyword">def</span> tag_end(name)
+    <span class="keyword">if</span> name==<span class="str">"entry"</span>
+      <span class="keyword">unless</span> @relation[@current[<span class="num">1</span>]]
+        @relation[@current[<span class="num">1</span>]] = [@current[<span class="num">0</span>]]
+      <span class="keyword">else</span>
+        @relation[@current[<span class="num">1</span>]] &lt;&lt; @current[<span class="num">0</span>]
+      <span class="keyword">end</span>
+      @current = []
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+File.open(<span class="str">"./rel_test.dot"</span>,<span class="str">"w"</span>) <span class="keyword">do</span> |file|
+  source = File.read <span class="str">"./atom-stream.xml"</span>
+  listener = RUSListener.new
+  REXML::Parsers::StreamParser.new(source, listener).parse
+  outputter = []
+  listener.relation.each <span class="keyword">do</span> |key, value|
+    value.each <span class="keyword">do</span> |from|
+      <span class="keyword">if</span> listener.relation[from] &#38;&#38; listener.relation[from].size &gt; <span class="num">1</span>
+        outputter &lt;&lt; <span class="str">"\"#{listener.name_map[from]}\" -&gt; \"#{listener.name_map[key]}\";\n"</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+  file.write(<span class="str">"digraph Relation {\n #{outputter.join} }\n"</span>)
+<span class="keyword">end</span>
+</pre><p>
+参考にした &gt; <a href="http://www.nslabs.jp/ruby-rexml.rhtml">http://www.nslabs.jp/ruby-rexml.rhtml</a>
+</p><p>
+あと、データが短期的すぎてネットワークに集約しないので、ある程度フィルタリングした。
+</p><p>
+Graphvizで出力
+</p><pre class="source">
+dot -Tpng rel_test.dot -o rel_test.png
+</pre><p>
+出力結果がこれ（見やすく切り取っています）
+</p><p class="clear">
+<a href="http://www.flickr.com/photo_zoom.gne?id=1748296207&size=o" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2364/1748296207_6c59a94f40.jpg" width="500" height="338" alt="rel_test" /></a>
+</p><p class="clear">
+むむ、やっぱある程度データの量貯めないと面白くないな。一週間くらい溜め込んで試してみたい。
+</p><p>
+ー以下余談ー
+</p><p>
+というか fooo.name でこんな情報の収集を早くすれば良いって話か。でもSNSなんかのフレンド情報を fooo.name でストアするのは問題あるよな、とも最近思ってきた
+<br />　・「リンク情報を保存してる」と言い張る
+<br />　・文句がついたら、そのサイト情報は保存しないようブロックして対応する
+<br />で逃げられないかな？
+</p><p>
+twitter繋がり = //a[@rel="contact"]
+<br />del.icio.us繋がり = //li[@class="netuni"]/a[@class="uname"]　（ http://del.icio.us/network/xxx のページで）
+</p><p>
+みたいにXPathでフレンドURLをサイト毎に定義してスクレイピングする。ってのが良いかな、と思うんだけどな。
+<br />いちいち有象無象のフレンド情報取得APIを叩くのはめんどくさい、サービス毎に実装すんのかよみたいな
+</p>
+

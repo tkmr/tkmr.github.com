@@ -1,0 +1,72 @@
+---
+layout: old_post
+title: Last.fmの聴いてる曲をTwitterへ送るRailsデスクトップアプリ
+permalink: /tatsuya/show/321-last-fm-twitter-rails
+---
+<p>
+RailsでApolloのようにデスクトップアプリを実現するSlingshot、<a href="http://developers.joyent.com/">やっと公開されたようなので</a>試してみる。
+<br />どうせなので<a href="http://blog.tkmr.org/tatsuya/show/318-twitter-api-rails-active-resouce">昨日の続きで</a>TwitterのAPIをいじるアプリケーションで、iTunesなどで現在聴いている曲を<a href="http://www.lastfm.jp/about/">Last.fm</a>から取得しTwitterへ投げるアプリケーションを作ってみた。
+</p><p>
+・Webアプリ版は<a href="http://twitt.tkmr.org/lastfm">こちら http://twitt.tkmr.org/lastfm</a>
+<br />・デスクトップアプリ版は<a href="http://tkmr.net/twitt/lastfm2twitter.app.zip">こちらから</a>（Macのみ、Winはそのうち）
+</p><ol>
+<li>TwitterのID / Passwordを入力</li>
+<li>Last.fmのIDを入力</li>
+<li>Submit</li>
+</ol><p>
+Last.fmから現在聴いている曲を取ってきて、Twitterへ投げます。
+<br />その後20分に１回JavaScriptでリロードを行います、ブラウザを閉じると終了。
+<br />
+<br /><img src="http://farm1.static.flickr.com/167/486488858_0240c377d6_o.jpg" class="corner iradius10 ishadow10" />
+</p><p class="clear">
+以下Railsアプリ作成→Slingshotアプリ作成の流れです。
+</p><p>
+<h3>1) 普通にRailsアプリケーションを作る</h3>
+<br />Slingshotは意識せず普通に作ればＯＫ。簡単な物なので今回はDBは使わない、sessionでいいや。<a href="http://blog.tkmr.org/tatsuya/show/318-twitter-api-rails-active-resouce">昨日と同様に</a>今回もActiveResource使って。
+</p><pre class="source">
+status = Twitter::Status.new
+status.text = <span class="str">"</span><span class="str">今これ聴いてる</span><span class="str">"</span>
+status.save
+<span class="comment">#POST http://twitter.com/statuses.xml</span>
+</pre><p>
+とか書きたかったけど、TwitterのAPIと合わないので残念。一応無理矢理使ってみた、でもこれならNet::HTTPで良いね：(
+</p><pre class="source">
+Twitter::Status.post(<span class="sym">:update</span>, {<span class="sym">:status=</span>&gt;<span class="str">"</span><span class="str">今これ聴いてる</span><span class="str">"</span>})
+</pre><p>
+<h3>2) Slingshotを設定</h3>
+</p><pre class="source">
+<span class="comment">#Subversion</span><span class="comment">で落としてくる</span>
+svn co http<span class="sym">:/</span>/svn.joyent.com<span class="regex">/slingshot/osx</span> slingshot
+<span class="comment">#</span><span class="comment">作成した</span><span class="comment">Rails</span><span class="comment">アプリを</span><span class="comment">VM</span><span class="comment">ディレクトリへ移動</span>
+cp -r myapp slingshot/VM/trunk/
+<span class="comment">#VM</span><span class="comment">ディレクトリを</span><span class="comment">Slingshot.app</span><span class="comment">の中に移動</span>
+mv slingshot/VM slingshot/Slingshot.app<span class="regex">/</span>
+</pre><p>
+<h3>3) データベースをSQLite3に変更</h3>
+<br />今回は関係無いけど、MySQLを設定している場合は config/database.yml を編集してSQLite3にしておく
+</p><p>
+<h3>4) 完了</h3>
+<br />動かしてみる、Slingshot.appをダブルクリック。
+</p><p class="clear">
+<img src="http://farm1.static.flickr.com/168/486520073_33beb27a5d_o.jpg" class="corner iradius10 ishadow10" />
+</p><p class="clear">
+確かに、デスクトップで動作してる！！
+<br />やってみると本当に簡単、Webアプリと同じコードでデスクトップアプリが動くのは良いね。今回で言うと
+</p><ul>
+<li>Twitterのパスワードをサーバに渡したくない人はデスクトップアプリ</li>
+<li>Twitterのパスワードを渡すのに抵抗無い人はWebアプリ</li>
+</ul><p>
+と場合によって使い分けられるかも。あとはWebとローカルの同期・デスクトップ固有の機能・Update機能、なんて辺りも試してみよう。
+</p><p>
+ちなみに、既にSlingshotを試した方が言っているように
+<br /><a href="http://blog.masuidrive.jp/index.php/2007/05/03/slingbox-first-step/">Railsでデスクトップアプリを作ってみる</a>
+<br /><a href="http://blog.masuidrive.jp/index.php/2007/05/03/reputation-for-slingshot/">Slingshotの評判</a>
+<br />さすがにまだまだ問題点が目に止まるかも。中でmongrelが動いてるってのも多少強引だと思うし、完成したパッケージが圧縮しても30MBを超えるのはきつい。気軽に配布ってのを想像してたのでサイズはもう少し削りたいかも・・・・・。まぁ面白いプラットフォームになりそうなのは確かなので見守っていきたい。
+</p><p>
+おまけ：その他 Last.fm(iTunes)→Twitter をやっているサイト
+<br /><a href="http://coreblog.org/ats/itunes-twitter-mashup">iTunesで聞いている曲をTwitterにPostするPythonのスクリプト</a>
+<br /><a href="http://d.hatena.ne.jp/brazil/20070413/1176394371">[JavaScript]iTunesで聴いてる曲をTwitterにポストする</a>
+<br /><a href="http://nyarla.net/blog/plagger10">Plagger使ってLastFMの最近聴いた音楽をTwitterに投稿する</a>
+<br />色々あるね。にしてもやっぱPlagger良いな
+</p>
+

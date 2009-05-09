@@ -1,0 +1,62 @@
+---
+layout: old_post
+title: MySpaceでOpenSocialアプリケーション OpenIDクライアント を試す ー (1)
+permalink: /tatsuya/show/417-myspace-opensocial-openid-1
+---
+<p>先々週、MySpace JapanのOpenSocialプラットフォーム対応が発表された</p>
+<p><a href="http://journal.mycom.co.jp/news/2008/03/28/031/index.html">マイスペースが開発者向けプラットフォームを発表 - OpenSocialに完全準拠</a><br /></p>
+<p>ということで、久しぶりにOpenSocialを色々といじってみようと思う。何かネタが無いとやりづらいので「OpenSocial上で動くOpenIDクライアント（Relying Party）」というネタで試してみよう。</p>
+<p>　</p>
+<h2>OpenSocial ver 0.7</h2>
+<p>OpenSocial自体については Ver 0.5 の頃<a href="http://blog.tkmr.org/tatsuya/show/406-google-opensocial-api-mixi-javascript-gadget">Orkut上で試した</a>ので、今回はそれを振り返りつつ Ver 0.7 までで新しくなった部分をMySpace上で試してみる。</p>
+<h2>Ver 0.7変更点</h2>
+<p>・外部サイトへHTTPリクエストを投げるAPI追加（XML・JSON・Text・Feed（RSS or Atom?））</p>
+<p>　　<a href="http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.html#makeRequest">http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.html#makeRequest</a></p>
+<p>・取得可能なプロフィール情報の項目追加（性別・好きな音楽・本 等々）</p>
+<p>　　<a href="http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.Person.Field.html">http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.Person.Field.html</a></p>
+<p>・各アプリケーション毎のデータストレージ API 追加（ 任意の key &amp; value のペアでサーバへ保存される、アプリケーション + ユーザID + key でユニークとなる）</p>
+<p>　　<a href="http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.DataRequest.html#newUpdatePersonAppDataRequest">http://code.google.com/apis/opensocial/docs/0.7/reference/opensocial.DataRequest.html#newUpdatePersonAppDataRequest</a></p>
+<p>・Activityが実装されつつある？（「○○さんが××をしました」みたいな通知API）</p>
+<p>　　<img src="http://data.tumblr.com/PiewZhiOE7hbyxw5wegoPzjh_400.png" /></p>
+<p class="clear">・環境情報が追加（実行中の画面やドメインが取れる、ホーム画面・プロフィール画面・専用画面、orkut.com・myspace.com）</p>
+<p>・ネームスペース変更多数（gadgets）</p>
+<p>他色々と。</p>
+<p>　</p>
+<p>外部サイトへのHTTPリクエストを行う makeRequest API がなかなか使い所ありそうなので、これを今回は試す。あとデータストレージも試してみよう。</p>
+<p>ということで、無理矢理っぽいけど「OpenIDへのログイン→ログイン履歴保存」という流れで実験。</p>
+<p>ちなみに、外部HTTPリクエストを行う makeRequest APIの仕様は、プロクシを経由することでクロスドメインAjaxが可能、といった代物で以下のようにリクエストが飛ぶ</p>
+<p>　クライアント ＞ プロクシ（proxy.myspace.com等） ＞ 外部サイト</p>
+<p>意外に細かい部分で気が利いていて、任意のヘッダが設定可能 &amp; 任意のメソッドが設定可能（GET/ POST / PUT / DELETE）</p>
+<p>Basic認証や無理矢理やれば WSSE認証も多分できそう。AtomPubクライアント in OpenSocialなんてのも面白そう。</p>
+<p>　</p>
+<h2>MySpace Developer Platform</h2>
+<p>OpenSocial仕様外の部分で、MySpace独自API（ユーザの投稿写真・ビデオ等）もあり、リファレンスはこちら</p>
+<p><a href="http://developer.myspace.com/community/myspace/myopenspace.aspx">MySpace Developer Platform</a></p>
+<p>この辺りも将来的にはOpenSocial APIとして足並みそろえていくのかな。</p>
+<p>個人的に写真・ビデオ・音楽といった一般的な情報はOpenSocialに含めてＯＫじゃないかと思う。逆に、株取引SNSの「注目の銘柄」や競馬SNSの「最近買った馬券」なんてサービスのドメインにべったり寄った情報は独自APIという方向に進む、のかな。線引きが難しい。</p>
+<p>また、MySpaceとOpenSocialの関係については<br /></p>
+<p><a href="http://devlog.agektmr.com/archives/37">OpenSocialとかどうよ？的な勉強会(!?)に参加してきた - Tender Surrender</a><br /></p>
+<p>こちらが、アプリケーション互換性の問題からマネタイズまで、判りやすくまとめられているので参考に。</p>
+<h3>MySpaceデベロッパー登録 ＞ アプリケーション作成</h3>
+<p>実際にMySpace上でアプリケーションを作成するには、デベロッパーとして登録する必要があるので登録。この辺り、登録から初めてのアプリケーション作成まで、こちらのサイトで分かり易くままとめられている</p>
+<p><a href="http://d.hatena.ne.jp/yorihito_tanaka/20080408">MySpaceアプリケーションを作ろう - ラーニング人生</a></p>
+<p>この手順に従ってやれば簡単にできる、筈。</p>
+<p>　</p>
+<h2>実装方針</h2>
+<p>・OpenIDの<strong>基本的</strong>な流れを実験する</p>
+<p>　　・XRI や Yadis による探索は未実装</p>
+<p>　　・関連付け（共有鍵の交換）は未実装</p>
+<p>　　・OPから受け取った署名の照合も未実装・・</p>
+<p>・処理フローはこんな感じで</p>
+<p>　　・input （ユーザによるidentifierの入力）</p>
+<p>　　・normalize（identifierの正規化）</p>
+<p>　　・discovery（OP Endpoint URLの探索）</p>
+<p>　　・association（共有鍵の交換）※未実装※</p>
+<p>　　・authentication（認証リクエスト）</p>
+<p>　　・response（認証結果のパース）</p>
+<p>　　・verify（署名の確認）※未実装※<br /></p>
+<p>　</p>
+<h2>以上</h2>
+<p>それでは明日へ続く、次回は実装を</p>
+
+

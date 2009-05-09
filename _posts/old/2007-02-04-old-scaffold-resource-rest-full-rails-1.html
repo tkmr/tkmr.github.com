@@ -1,0 +1,75 @@
+---
+layout: old_post
+title: scaffold_resourceでREST fullなRailsアプリ(1)
+permalink: /tatsuya/show/242-scaffold-resource-rest-full-rails-1
+---
+<p>Rails1.2から入ったscaffold_resourceを試してみる。まずごく単純に</p>
+<pre>ruby script/generate scaffold_resource Hoge title:string</pre>
+<p>titleフィールドのみを持つHogeリソースを作る、でrake migrateして完了！アクセスしてみる</p>
+<pre>
+irb(main):002:0* require 'net/http'
+irb(main):003:0&gt; http = Net::HTTP.start('localhost',3000)
+
+irb(main):005:0&gt; p http.get('/hoges.xml').body
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;nil-classes&gt;&lt;/nil-classes&gt;
+</pre>
+<p>hogesにGETのアクセスでindex
+</p><pre>
+
+irb(main):006:0&gt; p http.post('/hoges.xml','hoge[title]=AAA').body
+" "
+=&gt; nil
+</pre><p>
+hogesにPOSTのアクセスでnew (Create)
+</p><pre>
+irb(main):007:0&gt; p http.get('/hoges.xml').body
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;hoges&gt;
+  &lt;hoge&gt;
+    &lt;id type="integer"&gt;7&lt;/id&gt;
+    &lt;title&gt;AAA&lt;/title&gt;
+  &lt;/hoge&gt;
+&lt;/hoges&gt;
+</pre><p>
+//確認
+</p><pre>
+irb(main):008:0&gt; p http.get('/hoges/7.xml').body
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;hoge&gt;
+  &lt;id type="integer"&gt;7&lt;/id&gt;
+  &lt;title&gt;AAA&lt;/title&gt;
+&lt;/hoge&gt;
+</pre><p>
+/hoges/:id にGETアクセスでshow (Read)
+</p><pre>
+irb(main):009:0&gt; p http.put('/hoges/7.xml','hoge[title]=BBB').body
+" "
+=&gt; nil
+</pre><p>
+/hoges/:id にPUTアクセスでedit (Update)
+</p><pre>
+irb(main):010:0&gt; p http.get('/hoges/7.xml').body
+&lt;hoge&gt;
+  &lt;id type="integer"&gt;7&lt;/id&gt;
+  &lt;title&gt;BBB&lt;/title&gt;
+&lt;/hoge&gt;
+</pre><p>
+確認
+</p><pre>
+irb(main):011:0&gt; p http.delete('/hoges/7.xml').body
+" "
+=&gt; nil
+</pre><p>
+/hoges/:id にDELETEアクセスでdestroy (Delete)
+</p><pre>
+irb(main):013:0&gt; p http.get('/hoges.xml').body
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;nil-classes&gt;&lt;/nil-classes&gt;
+</pre><p>
+確認
+</p>
+<p>
+本当にHTTPのPOST/GET/PUT/DELETEそれぞれの方式で、CRUDに対応させている。いまのwebではPUT/DELETE なんてメソッド実際に見たことはないけど、そのほうが美しいならそうしようって発想が凄い。scaffold_resource凄いね</p>
+<p><a href="http://blog.tkmr.org/tatsuya/show/245">続き</a></p>
+

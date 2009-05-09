@@ -1,0 +1,67 @@
+---
+layout: old_post
+title: Rails:座標計算用のプラグイン GeoKit
+permalink: /tatsuya/show/262-rails-geokit
+---
+<a href="http://earthcode.com/blog/2007/02/geokit_map_plugin.html">Web 2.0 Technologies: GeoKit: a plugin for location-based Rails apps</a>
+<p>
+Rails用に座標計算をやってくれるプラグインGeoKitてのが出たそうな、機能としては
+<ul><li>2点の座標間の距離を計算</li><li>ActiveRecordへ距離に基づく検索機能追加</li><li>複数のGeocodingAPIを利用（冗長性があるのでフェールオーバーだと）</li><li>IPアドレスから座標を特定</li></ul>面白そうなのでちょっと試してみる。インストールはいつも通りgemで
+</p>
+<pre>
+ruby script/plugin install svn://rubyforge.org/var/svn/geokit/trunk
+</pre>
+
+<p>
+ほんで適当なモデルを作る
+</p>
+
+<pre>
+ruby script/generate scaffold_resource Store lat:float lng:float
+rake migrate
+</pre>
+
+<p>
+できた/model/storeを修正後、script/consoleで試してみる。 
+</p>
+
+<pre>
+class Store &lt; ActiveRecord::Base
+  acts_as_mappable
+end
+</pre>
+
+<h3>経度/緯度で指定した位置から指定距離内をfind</h3>
+<pre>
+&gt;&gt; Store.find(:all, :lat=&gt;9.0, :lng=&gt;9.0, :conditions=&gt;'distance&lt;70')
+=&gt; [#&lt;Store:0x47e7da0 @attributes={"lng"=&gt;"8", "id"=&gt;"4", "lat"=&gt;"9", "distance", "68.315811587408"}&gt;]
+
+SELECT *,(ACOS(COS(0.15707963267949)*COS(0.15707963267949)*COS(RADIANS(lat))*COS(RADIANS(lng))+COS(0.15707963267949)*SIN(0.15707963267949)*COS(RADIANS(lat))*SIN(RADIANS(lng))+ SIN(0.15707963267949)*SIN(RADIANS(lat)))*3963) AS distance FROM stores WHERE ((ACOS(COS(0.15707963267949)*COS(0.15707963267949)*COS(RADIANS(lat))*COS(RADIANS(lng))+COS(0.15707963267949)*SIN(0.15707963267949)*COS(RADIANS(lat))*SIN(RADIANS(lng))+SIN(0.15707963267949)*SIN(RADIANS(lat)))*3963)&lt;70)
+</pre>
+<p>
+おー凄いSQL。。このSQL読む元気ないけど、まあsin, cos, tanで計算してると。
+</p>
+
+<h3>住所を文字列で指定、一定距離内をfind</h3>
+<pre>
+&gt;&gt;Store.find(:all, :origin=&gt;'100 Spear st, San Francisco, CA', :conditions=&gt;'distance&lt;10')
+
+Google geocoding. Address: 100 Spear st, San Francisco, CA. Result:
+
+SELECT *, (ACOS(COS(0.659604046252148)*COS(-2.13617795307338)*COS(RADIANS(lat))*COS(RADIANS(lng))+ COS(0.659604046252148)*SIN(-2.13617795307338)*COS(RADIANS(lat))*SIN(RADIANS(lng))+ SIN(0.659604046252148)*SIN(RADIANS(lat)))*3963) AS distance FROM stores WHERE ( (ACOS(COS(0.659604046252148)*COS(-2.13617795307338)*COS(RADIANS(lat))*COS(RADIANS(lng))+ COS(0.659604046252148)*SIN(-2.13617795307338)*COS(RADIANS(lat))*SIN(RADIANS(lng))+ SIN(0.659604046252148)*SIN(RADIANS(lat)))*3963)&lt;10)
+</pre>
+<p>
+住所の文字列をGoogleのGeocodingAPIで緯度・経度に直して、同じように計算？SQL凄い
+</p>
+
+<h3>サンフランシスコとロスアンジェルスの距離</h3>
+<pre>
+&gt;&gt; cisco=GeoKit::Geocoders::YahooGeocoder.geocode('100 Spear st, San Francisco, CA')
+&gt;&gt; losAngeles=GeoKit::Geocoders::YahooGeocoder.geocode('2126 S Central Ave, Los Angeles, CA')
+&gt;&gt; p losAngeles.distance_from(cisco, :units=&gt;:kms)
+561.502467660011
+</pre>
+<p>
+このあたり日本の住所取れるかどうかはGoogle/YahooのAPI次第ってことだよね？あとで調べるてみるかも、みないかも。
+</p>
+

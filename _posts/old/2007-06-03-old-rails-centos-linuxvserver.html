@@ -1,0 +1,98 @@
+---
+layout: old_post
+title: Rails環境の整備-CentOSにLinuxVServerを入れてみる
+permalink: /tatsuya/show/339-rails-centos-linuxvserver
+---
+<p>
+最近実験用にサーバを追加した、どうせなのでOS仮想化して環境を作ろうと思う。仮想化しとけばハードさえ買ってくれば環境のセットアップが楽なので
+<br />最近の流行りからいうとXenが良さそうだけど、ちょっと大げさな気もするなーと思ってたらVServerってのが良さそうだ
+</p><p>
+<a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する">dara日記</a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する"> - Debian etch + Linux-VServer </a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する">で</a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する"> Rails</a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する">向きの</a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する">VM</a><a href="http://d.hatena.ne.jp/darashi/20070328/1175089122" title="dara日記 - Debian etch + Linux-VServer で Rails向きのVM環境を構築する">環境を構築する</a>
+<br /><a href="http://d.hatena.ne.jp/zeemore/20060926">Z</a><a href="http://d.hatena.ne.jp/zeemore/20060926">手帖</a><a href="http://d.hatena.ne.jp/zeemore/20060926"> - OpenVZ</a><a href="http://d.hatena.ne.jp/zeemore/20060926">について</a>
+</p><p>
+現在の仮想化技術は大きく３種類に分かれて
+</p><p>
+<strong>1) Virtual machines </strong><strong>（仮想マシン）</strong>
+<br />　Vmware、Parallels、Virtual Server等
+</p><p>
+<strong>2) Paravirtualization</strong><strong>（準仮想化）</strong>
+<br />　Xen、UML等
+</p><p>
+<strong>3) Virtualization on the OS level</strong><strong>（</strong><strong>OS</strong><strong>レベルの仮想化）</strong>
+<br />　OpenVZ、Linux-Vserver、Solaris Zone
+</p><p>
+で仮想化レベルは1が一番高い、1は完全にハードウェアをエミュレートするのでクライアントは何でもＯＫ
+<br />逆に仮想化に必要なオーバヘッドが高いのでパフォーマンスが悪い、らしい。
+<br />Vserverが属する3は逆にオーバヘッドが低く、その代わり仮想化レベルも低い（カーネルは共有）。
+</p><p>
+ということでVServerセットアップをメモ、ベースはCentOS5
+</p><p>
+1) CentOS5を普通にインストール
+<br />　GUIで楽々インストール、適当に
+</p><p>
+2) RPMでVServer対応カーネルへ差し替えて再起動（参考：<a href="http://linux-vserver.org/Installation_on_CentOS">http://linux-vserver.org/Installation_on_CentOS</a>）
+<br />　<strong>wget -c http://rpm.hozac.com/dhozac/fedora/6/vserver/i386/kernel-2.6.20-1.2936.fc6.vs2.2.0.1.i686.rpm</strong>　
+<br />　<strong>rpm -ivh kernel-2.6.20-1.2936.fc6.vs2.2.0.1.i686.rpm</strong>
+<br />　<strong>reboot</strong>
+</p><p>
+3）ホスト環境のsshd設定（参考：<a href="http://d.hatena.ne.jp/darashi/20070328/1175089122">http://d.hatena.ne.jp/darashi/20070328/1175089122</a>）
+<br />　ListenAddressをホスト環境のIPに変更しておく
+<br />　<strong>vi /etc/ssh/sshd_config</strong>
+<br />　<strong>ListenAddress 192.168.1.99</strong> 　と追加して保存（ホスト環境のIP）
+</p><p>
+4) util-vserver を入れる（参考：<a href="http://opentechpress.jp/developer/article.pl?sid=06/06/25/0257254">http://opentechpress.jp/developer/article.pl?sid=06/06/25/0257254</a>）
+<br />　準備dietlibcとbeecrypt-develを入れておく
+<br />　<strong>yum install -y dietlibc beecrypt-devel</strong>
+</p><p>
+　util-vserverのソースを落としてくる
+<br />　<strong>wget http://ftp.linux-vserver.org/pub/utils/util-vserver/util-vserver-0.30.212.tar.bz2</strong>
+<br />　<strong>tar -zxvf util-vserver-0.30.212.tar.bz2</strong>
+<br />　<strong>cd util-vserver-0.30.212</strong>
+</p><p>
+　<strong>./configure</strong>
+<br />　<strong>make &#38;&#38; make install &#38;&#38; make install-distribution</strong>
+</p><p>
+　インストールの結果を確認
+<br />　<strong>wget http://vserver.13thfloor.at/Stuff/SCRIPT/testme.sh</strong>
+<br />　<strong>chmod 700 testme.sh</strong>
+<br />　<strong>./testme.sh</strong>
+</p><p>
+　次のように表示されればOK
+<br />　Linux-VServer Test [V0.15] Copyright (C) 2003-2006 H.Poetzl
+<br />　chcontext is working.
+<br />　・・・・・・・・・・・・・・
+<br />　[000]# succeeded.
+<br />　[001]# succeeded.
+<br />　[011]# succeeded.
+<br />　[031]# succeeded.
+<br />　[101]# succeeded.
+<br />　[102]# succeeded.
+<br />　[201]# succeeded.
+<br />　[202]# succeeded
+</p><p>
+5) ゲスト環境をセットアップ（参考：<a href="http://www.ne.jp/asahi/open/gallery/linux/vserver/vserverfc5/vserverfc5.htm">http://www.ne.jp/asahi/open/gallery/linux/vserver/vserverfc5/vserverfc5.htm</a>）
+<br />　<strong>sudo vserver template build -m yum --hostname=template --interface eth0=eth0:192.168.1.100/24 -- -d fc6</strong>
+<br />　で自分の環境だと /vservers/template  が作られる。
+<br />　これ以後割と自分の環境用メモへと
+</p><p>
+　<strong>cp /etc/resolv.conf /vservers/template/etc/.</strong> #ホストからゲストへコピー
+<br />　<strong>vyum template -- install yum</strong> #ゲスト環境へyumをセットアップ
+<br />　<strong>vserver template start</strong> #開始
+<br />　yum install openssl-server
+<br />　yum install rootfiles
+<br />　yum instlal emacs
+<br />　・・・・・・普段使用するツールを入れていく
+<br />
+<br />　yum install mysql-server
+<br />　yum install ruby
+<br />　wget http://rubyforge.org/frs/download.php/20989/rubygems-0.9.4.tgz
+<br />　gem install rails
+<br />　・・・・・・・・・続く
+<br />　
+<br />　ホスト起動時にゲスト環境も自動で立ち上げるには以下のように
+<br />　echo default &gt; /etc/vservers/basil/apps/init/mark
+</p><p>
+これであとは /vserver/template 配下をtarで固めて持って行けば、サーバ追加しても同じ環境が動く、で良いんだよね？実験用にサーバ追加も簡単。
+<br />よし、セットアップを続けよう。基本になる環境ができたら保管しておこうかな。
+</p>
+

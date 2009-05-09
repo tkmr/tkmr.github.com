@@ -1,0 +1,116 @@
+---
+layout: old_post
+title: Firefoxを自動リロードして快適開発生活 - Ruby＞DRb＞MozLab＞Firefox
+permalink: /tatsuya/show/337-firefox-ruby-drb-mozlab-firefox
+---
+<p>
+いまさらながら、ファイル更新を検知してMozLab経由telnetでFirefoxのページ更新をするRubyスクリプトを書いてみた
+<br />激しく車輪の再発明くさいけど、気にしない方向で。
+<br />自宅MacはローカルのみでOKだけど、どうせなのでサーバ + クライアントと分かれていても使えるように、DRbで通信してみた。
+</p><p>
+<strong>ローカル</strong><strong>PC (reload-firefox.rb)</strong>
+</p><pre class="source">
+<span class="comment">#!/usr/local/bin/ruby</span>
+require <span class="str">'drb/drb'</span>
+require <span class="str">'net/telnet'</span>
+
+DRB_PORT = <span class="num">7575</span>
+MOZLAB_PORT = <span class="num">4242</span>
+
+<span class="keyword">class</span> ReloadFirefox
+  <span class="keyword">def</span> initialize(stream=$stdout)
+    @stream = stream
+    @telnet = Net::Telnet.new({
+      <span class="str">"Host"</span> =&gt; <span class="str">"localhost"</span>,
+      <span class="str">"Port"</span> =&gt; MOZLAB_PORT
+    })
+  <span class="keyword">end</span>
+  <span class="keyword">def</span> reload
+    @stream.puts <span class="str">"reload Firefox"</span>
+    @telnet.puts <span class="str">"content.location.reload(true)"</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+uri = <span class="str">"druby://#{ARGV.shift}:#{DRB_PORT}"</span>
+DRb.start_service(uri, ReloadFirefox.new)
+puts <span class="str">"start DRb server #{uri}"</span>
+sleep
+</pre><p>
+<strong>サーバ側</strong><strong> (reload-checker.rb)</strong>
+</p><pre class="source">
+<span class="comment">#!/usr/bin/ruby</span>
+require <span class="str">'drb/drb'</span>
+
+WAIT_TIME = <span class="num">3</span>
+RELOAD_TIME = <span class="num">0.5</span>
+DRB_PORT = <span class="num">7575</span>
+
+uri = ARGV.shift
+firefox = DRbObject.new_with_uri(<span class="str">"druby://#{uri}:#{DRB_PORT}"</span>)
+
+check = []
+<span class="keyword">while</span>(name = ARGV.shift)
+  check &lt;&lt; Dir::pwd + <span class="str">"/"</span> + name
+<span class="keyword">end</span>
+
+last_time = Time.now
+<span class="keyword">while</span> <span class="keyword">true</span>
+  check.each <span class="keyword">do</span> |name|
+    file_time = File::mtime(name)
+    <span class="keyword">if</span> (last_time + WAIT_TIME) &lt; file_time <span class="keyword">then</span>
+      p <span class="str">"file #{name} updated now..."</span>
+      firefox.reload
+      last_time = file_time
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+  sleep(RELOAD_TIME)
+<span class="keyword">end</span>
+</pre><p>
+サーバ側でファイルの更新を検知したらDRbでローカルPCへ通知、ローカルPCのプロセスがtelnetでFirefoxへページ更新命令を投げる。
+</p><p>
+<strong>実行手順</strong><strong> (</strong><strong>ローカル</strong><strong>PC</strong><strong>の</strong><strong>IP</strong><strong>を</strong><strong> 192.168.1.2 </strong><strong>とする）</strong>
+</p><p>
+1) サーバ側でfoo.cssとbar.cssを監視する場合 <strong> ruby reload-checker.rb 192.168.1.2 foo.css bar.css</strong>
+<br />2) 以下ローカルPCで、FirefoxへMozLab拡張を入れて再起動 <a href="http://dev.hyperstruct.net/mozlab">http://dev.hyperstruct.net/mozlab</a>
+<br />3) Firefoxのメニューから Tools ＞ MozLab ＞ start repl でtelnet待ち受け開始
+<br />4) ローカルPC待ち受け開始 <strong>ruby reload-server.rb 192.168.1.2</strong>
+</p><p>
+でサーバ情報ファイルを変更してみる ＞ ローカルPCのFirefoxが自動でページリロードする筈。cssとかviewの作業がかなり快適生活：）
+<br />クライアント&#38;サーバ 共にローカルで完結するならこれで
+</p><pre class="source">
+<span class="comment">#!/usr/local/bin/ruby</span>
+<span class="comment">#reload-local.rb</span>
+require <span class="str">'net/telnet'</span>
+
+WAIT_TIME = <span class="num">3</span>
+RELOAD_TIME = <span class="num">0.5</span>
+
+<span class="keyword">def</span> reload_firefox(name)
+  p <span class="str">"reload #{name}"</span>
+  @telnet.puts <span class="str">"content.location.reload(true)"</span>
+<span class="keyword">end</span>
+
+@telnet = Net::Telnet.new({
+  <span class="str">"Host"</span> =&gt; <span class="str">"localhost"</span>,
+  <span class="str">"Port"</span> =&gt; <span class="num">4242</span>
+})
+check = []
+<span class="keyword">while</span>(name = ARGV.shift)
+  check &lt;&lt; Dir::pwd + <span class="str">"/"</span> + name
+<span class="keyword">end</span>
+
+last_time = Time.now
+<span class="keyword">while</span> <span class="keyword">true</span>
+  check.each <span class="keyword">do</span> |name|
+    file_time = File::mtime(name)
+    <span class="keyword">if</span> (last_time + WAIT_TIME) &lt; file_time <span class="keyword">then</span>
+      reload_firefox(name)
+      last_time = file_time
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+  sleep(RELOAD_TIME)
+<span class="keyword">end</span>
+</pre><p>
+<strong>ruby reload-local.rb hoge.txt </strong>とかで
+</p>
+

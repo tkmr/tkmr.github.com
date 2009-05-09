@@ -1,0 +1,83 @@
+---
+layout: old_post
+title: On Lisp「22章 非決定性」をRubyで試してみる
+permalink: /tatsuya/show/413-on-lisp-22-ruby
+---
+<p style="text-align: left;"><img src="http://ecx.images-amazon.com/images/I/21BYBlSsmXL.jpg" width="114" height="160" /><br /></p>
+<p class="clear"><a href="http://www.amazon.co.jp/gp/redirect.html%3FASIN=4274066371%26tag=adriaantijsse-20%26lcode=xm2%26cID=2025%26ccmID=165953%26location=/o/ASIN/4274066371%253FSubscriptionId=0PZ7TM66EXQCXFVTMTR2">"On Lisp―Advanced Techniques for Common Lisp" (Paul Graham)</a></p>
+<p class="clear">を読んだ。</p>
+<p>・Lispの基礎から、マクロ、遅延評価、Schemeと継続、継続をCommonLispで実装して、継続を使った非決定的アルゴリズムの実装、Prolog</p>
+<p>初めて関数型プログラミング、というかLispを勉強した身にとっては全編興味深い、特に22章の「非決定性」が面白かった。</p>
+<blockquote>
+  <p><a href="http://user.ecc.u-tokyo.ac.jp/~tt076524/onlispjhtml/nondeterminism.html">On Lisp - 非決定性</a></p>
+
+  <p>非決定的アルゴリズムはある意味では超自然的な予見に基づいて動作するものだ．超能力を持ったコンピュータに触れることのない私達に，どうしてそんなものが必要なのだろうか？\ それは非決定的アルゴリズムを決定的アルゴリズムでシミュレートできるからだ．純粋に関数的なプログラム ---すなわち副作用の一切ないもの--- では，非決定性は特に直截的になる．純粋に関数的なプログラムでは非決定性はバックトラックを用いた探索で実現できる．</p>
+</blockquote>
+<p>バックトラックによる非決定性の実装例が紹介されてる、乱暴に言うと「複数の選択肢がある時、その時点の継続を保存し<strong>とりあえず</strong>一つの選択肢を選んで処理を続ける。成功すればOK、もし選択が失敗してた場合選択前の過去に戻って、別の選択肢を選んで処理を継続する」で良いのかな。</p>
+<p>とりあえず理解のためにRubyで実装してみた。</p>
+<pre class="source">
+<span class="keyword">class</span> Nond
+  <span class="keyword">def</span> initialize
+    @paths = []
+  <span class="keyword">end</span>
+
+  <span class="keyword">def</span> choose(choises)
+    <span class="keyword">if</span> choises.empty?
+      failed
+    <span class="keyword">else</span>
+      <span class="keyword">return</span> callcc <span class="keyword">do</span> |c|
+        @paths.unshift(lambda{ c.call( choose(choises[<span class="num">1</span>..choises.length]) ) })
+        choises[<span class="num">0</span>]
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+
+  <span class="keyword">def</span> failed
+    <span class="keyword">if</span> @paths.empty?
+      raise <span class="str">"Can't find more choises."</span>
+    <span class="keyword">else</span>
+      @paths.shift.call
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+<p>Ruby1.8 にも継続があるので、ほぼ本のまま。試してみる。</p>
+<pre class="source">
+@nond = Nond.new
+
+<span class="keyword">def</span> parlor_trick(sum, firsts, secounds)
+  first = @nond.choose(firsts)
+  secound = @nond.choose(secounds)
+
+  <span class="keyword">if</span> sum == first + secound
+    <span class="str">"The sum of #{first} #{secound}"</span>
+  <span class="keyword">else</span>
+    @nond.failed
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+p parlor_trick(7, [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>,<span class="num">5</span>], [<span class="num">1</span>,<span class="num">2</span>,<span class="num">3</span>,<span class="num">4</span>])
+</pre>
+<p>二組の数字のリストから加算の結果が sum と等しい組み合わせを返す。</p>
+<p><img src="http://img.skitch.com/20080210-mkmuxy72gcqhjrncgjtnr9hibm.jpg" alt="30BF30FC30DF30CA30EB 2014 screen 2014" /></p>
+<p class="clear">実行してみると確かに3と4で7になってる。</p>
+<p>もう一例、今度は名前のリストから "Igor" を見つける<br /></p>
+<pre class="source">
+<span class="keyword">def</span> igor(names)
+  name = @nond.choose(names)
+  <span class="keyword">if</span> name==<span class="str">"Igor"</span>
+    p <span class="str">"Found Igor!"</span>
+  <span class="keyword">else</span>
+    @nond.failed
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+p igor([<span class="str">"Yakov"</span>, <span class="str">"Yulli"</span>, <span class="str">"Raisa"</span>, <span class="str">"Iwan"</span>, <span class="str">"Igor"</span>, <span class="str">"Daniel"</span>, <span class="str">"Egor"</span>])
+</pre><img src="http://img.skitch.com/20080210-x6puyfff1myrck5kc4r2hrwn4x.jpg" alt="30BF30FC30DF30CA30EB 2014 screen 2014 170" />
+<p>　</p>
+<p class="clear">肝の関数 choose と fail の実装を見れば納得できるけど、アプリケーションのコードだけを見るとまるで choose が超能力で正解を導き出したように見える、その実装も「失敗したら過去に戻ってやり直す」てのは凄いな。</p>
+<p>この22章非決定性の発展で、24章ではLispの埋め込み言語としてPrologを実装してるけど、ここまでいくと正直理解があいまい。。また読み直そう</p>
+<p><a href="http://user.ecc.u-tokyo.ac.jp/~tt076524/onlispjhtml/prolog.html">On Lisp - Prolog</a></p>
+<p>Prolog面白そうだな、どこから勉強するのが良いんだろ。とっかかりとして。</p>
+
+

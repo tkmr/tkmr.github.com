@@ -1,0 +1,71 @@
+---
+layout: old_post
+title: Rails/プラグイン/acts_as_taggableを試してみる。
+permalink: /tatsuya/show/194-rails-acts-as-taggable
+---
+<p>ブログを整理するのにカテゴリかタグで分類してみようと思い立ったので、楽にプラグインを使ってみる<a href="http://wiki.rubyonrails.org/rails/pages/ActsAsTaggablePluginHowto">acts_as_taggable</a>が良い感じらしい。</p>
+
+<p><pre>script/plugin install acts_as_taggable</pre></p>
+
+<p>でタグ用のテーブルを作る、↑のサイトの通りで良い？</p>
+
+<p><pre>script/generate migration add_tag_support</pre></p>
+
+<p>でできたmigrateファイルに以下をコピー</p>
+
+<p><pre>
+class AddTagSupport < ActiveRecord::Migration
+  def self.up
+    create_table :tags do |t|
+      t.column :name, :string
+    end
+    
+    create_table :taggings do |t|
+      t.column :tag_id, :integer
+      t.column :taggable_id, :integer
+      t.column :taggable_type, :string
+    end
+    
+    add_index :tags, :name
+    add_index :taggings, [:tag_id, :taggable_id, :taggable_type]
+  end
+  
+  def self.down
+    drop_table :tags
+    drop_table :taggings
+  end
+end
+</pre></p>
+
+<p>migrate実行でテーブル作る</p>
+
+<p><pre>
+rake migrate
+</pre></p>
+
+<p>でこんな感じでチョコチョコ改造、deliciousのブックマークを取り込む⇒タグ付けしてみる。</p>
+
+<p><pre>
+class Post < ActiveRecord::Base
+   acts_as_taggable
+end
+
+doc = REXML::Document.new (https://del.icio.us/v1/posts/get戻り値)
+doc.elements['posts'].each{|pos|
+  newPost = Post.new
+  newPost.title = pos.attributes['description'].to_s
+  newPost.body = pos.attributes["extended"].to_s
+  newPost.body += "&lt;a href='#{pos.attributes['href'].to_s}'&gt;[Link]&lt;/a&gt;"
+  newPost.tag_with(pos.attributes["tag"])
+  newPost.save
+ end
+end
+}
+</pre></p>
+
+<p>こんな感じ、適当に動かしてＤＢ見ると上手く入ってるみたいなので使ってみる</p>
+
+<p><pre>posts = Post.find_tagged_with('hoge')</pre></p>
+
+<p>シンプルで良いね～、さぁちゃんと動くか</p>
+

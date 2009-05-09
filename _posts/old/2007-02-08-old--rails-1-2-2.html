@@ -1,0 +1,56 @@
+---
+layout: old_post
+title: 早速Rails 1.2.2出た 変更点とか。
+permalink: /tatsuya/show/252-rails-1-2-2
+---
+<p>
+Rails 1.2.1出たと思ったら、早速マイナーバージョンアップ出た。Rails 1.2.2
+変更点は大きく三つ、らしい。
+</p>
+
+<br />
+<big>1.SQLite3.3.7 - 3.3.8のバグFix</big>
+<p>
+RailsからSQLite3.3.7 - 8を使用するとエラーが起こっていた問題を解消。この問題かな？
+<a href="http://wota.jp/ac/?date=20070206#p01">从 ;’w’;)クゥ～ン(2007-02-06) : SQLite 3.3.8 以降は今危険</a>
+</p>
+
+<br />
+<big>2.RubyGems関連でバグFix</big>
+<p>
+RubyGemsでバグＦｉｘ？詳しくはわかんね。
+</p>
+
+<br />
+<big>3.新機能追加map.resourceとbetween</big>
+<p>
+map.resourceで単数形でモデルを扱うことができるようになった
+</p>
+<pre>map.resource :account</pre>
+<p>
+と/config/routes.rb へ記述すれば、こんな感じでルーティングされる
+</p>
+<pre>
+GET    /account      =&gt; AccountController#show
+GET    /account/new  =&gt; AccountController#new
+GET    /account;edit =&gt; AccountController#edit
+POST   /account      =&gt; AccountController#create
+PUT    /account      =&gt; AccountController#update
+DELETE /account      =&gt; AccountController#destroy
+</pre>
+<p>
+う～む、あんまり嬉しい状況が思い浮かばん。単数であることが明確なクラスを扱う時とか？抽象的な話というか、概念的な話に思えてくる。　最後これは判り易い、ActiveRecordでbetweenのサポート
+</p>
+<pre>
+Post.find(:all, :conditions=&gt;{:id=&gt; 10..15}) 
+</pre>
+<p>
+を実行すれば、以下のSQLが実行される
+</p>
+<pre>
+SELECT * FROM posts WHERE id BETWEEN 10 AND 15
+</pre>
+<p>
+なんかちょっと試したら、Rails1.2.1でも単数形でAccountControllerとか用意すれば/accountでルーティング出来てる気もする、何が違うのか誰か教えてー
+</p>
+

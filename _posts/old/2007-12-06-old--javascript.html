@@ -1,0 +1,110 @@
+---
+layout: old_post
+title: 自由にアクセス制御可能なJavaScriptサンドボックスを作る
+permalink: /tatsuya/show/407-javascript
+---
+<p>
+追記：早速破られた！
+</p>
+<pre> 
+safeCall("var w=(function(){return this;}).call();w.alert(w.document.cookie);");
+id:kazuhooku - http://b.hatena.ne.jp/kazuhooku/20071206#bookmark-6709542
+</pre>
+<p>
+サイ本よく見ると確かに「オブジェクトのメソッドとして呼び出された関数内でも、入れ子にされた関数内のthisはグローバルオブジェクトを参照します」て書いてあった。あとMDCにも <a href="http://developer.mozilla.org/ja/docs/Core_JavaScript_1.5_Reference:Operators:Special_Operators:this_Operator">http://developer.mozilla.org/ja/docs/Core_JavaScript_1.5_Reference:Operators:Special_Operators:this_Operator</a>
+</p>
+<p>
+=========
+</p>
+<p>
+面白い記事があった、GreasemonkeyのunsafeWindowを安全にすることは可能か
+</p>
+<p>
+<a href="http://d.hatena.ne.jp/brazil/20071205/1196814940">[JavaScript] GM_xmlhttpRequestを使えなくする - 実用</a>
+<br/>
+<a href="http://d.hatena.ne.jp/ku0522/20071205/1196819346">GM評価のsandbox - ゼロメムはてな支店</a>
+</p>
+<p>
+この記事はGreasemonkeyのunsafeWindowについて（GM実行中サイトが悪意を持っていた場合 or XSSの穴が合った場合対策）だけど
+自分もちょうど、JavaScriptを安全に実行する方法が無いか考えていたので、ここに書いてみる。まず目的は
+</p>
+<p>
+<b>・自サイト上でユーザにJavaScriptを（限定的に）許可したい</b>
+</p>
+<p>
+例えば、はてなダイアリー等でユーザがブログパーツを張れるよう許可するとか。但し<br/>
+・document.cookie等、危険な機能は操作不能にする<br/>
+・あくまでサイト上でJSを許可する（iframeは不可）<br/>
+</p>
+<p>
+で、幾つか考えられるのが以下。
+</p>
+<p>
+・iframe内で実行<br/>
+iframeを生成して、そのwindowの中で実行させる。これなら確実に安全なサンドボックスが用意できそうだなと思うけど、今回はスルー
+</p>
+<p>
+・Facebookアプローチ（変数・関数名にプレフィックスを付けて無害化）<br/>
+Facebookがユーザに許可するJSでは、変数・関数名にプレフィックスを付けて無害化するらしい<br/>
+<a href="http://kawa.at.webry.info/200708/article_3.html">[Facebook] FBJSでFacebookアプリ内でJavaScriptを利用 - Kawa.netブログ（川崎有亮）</a><br/>
+面白いな、とも思うけど無害化するロジックに穴があるとセキュリティホールになりそうな気がする。
+</p>
+<p>
+で、色々調べていて一つ思ったんだけど、こんなのどうだろう
+</p>
+<pre class="source">
+function safeCall(users_code){
+  var sandbox = {
+    window: null,
+    document: null,
+    alert: null
+  };
+  with(sandbox){
+    console.log(eval(users_code));
+  }
+}
+</pre><p>
+これならsandboxオブジェクト内に列挙したwindow, document, alert,,,等は、無効化してevalできる筈
+</p><p class="clear">
+<a href="http://www.flickr.com/photos/tkmr2000/2089473686/" title="sandbox1 by tatkmr2000, on Flickr"><img src="http://farm3.static.flickr.com/2197/2089473686_8ce907e889_o.png" alt="sandbox1" height="275" width="388" /></a>
+</p><p class="clear">
+確かに列挙したオブジェクトはnullになる、逆に許可したいオブジェクトは含めなければ良い筈。Sandbox.myDocument.myGetElementByIdみたいに許可するネームスペース／クラスを決めてそれを叩いて貰えば制御可能になるかな。と思ったけど、deleteでプロパティ削除されると意味ない
+</p><p class="clear">
+<a href="http://www.flickr.com/photos/tkmr2000/2089473696/" title="sandbox2 by tatkmr2000, on Flickr"><img src="http://farm3.static.flickr.com/2368/2089473696_0634a8faa8_o.png" alt="sandbox2" height="188" width="382" /></a>
+</p><p class="clear">
+じゃあvarで宣言すればどうだろ？
+</p><pre class="source">
+function sandbox(){
+  var window = null;
+  var document = null;
+  var alert = null;
+  this.do = function(code){
+    with(this){
+      console.log(eval(code));
+    }
+  }
+}
+</pre><p>
+原則varで宣言した変数はdelete不可能な筈、これで一応大丈夫？
+</p><p class="clear">
+<a href="http://www.flickr.com/photos/tkmr2000/2089473704/" title="sandbox3 by tatkmr2000, on Flickr"><img src="http://farm3.static.flickr.com/2301/2089473704_43bf3e5cbd_o.png" alt="sandbox3" height="293" width="413" /></a>
+</p><p class="clear">
+どうだろ、やっぱり抜け穴がある気がしてならない。。
+
+あと、実際にはwindowのプロパティを列挙する必要がある。
+</p><p class="clear">
+<a href="http://www.flickr.com/photos/tkmr2000/2089473698/" title="window_properties by tatkmr2000, on Flickr"><img src="http://farm3.static.flickr.com/2146/2089473698_cc728de246_o.png" alt="window_properties" height="283" width="948" /></a>
+</p><p class="clear">
+で実際に運用する時は、無害なタグとして記述して貰ってsandbox経由に実行すれば良いかな。今流行の俺俺スクリプト風に
+</p>
+<pre class="source">
+&lt;script type=<span class="str">&quot;text/my-safe-javascript&quot;</span>&gt;
+  alert(<span class="str">&quot;Hello world from sandbox!!&quot;</span>);
+&lt;<span class="regex">/script&gt;</span>
+</pre>
+<p>
+とか書いて貰って、ページ起動時に //script[@type="text/my-safe-javascript"] な要素を探してsandbox経由で実行みたいな。//script[@type="text/javascript"] はサーバ側のフィルタで潰す
+</p><p>
+うーん、どうだろ？やっぱ何か抜けがあるかな、ある気がする。きっとあるな。
+</p>
+

@@ -1,0 +1,63 @@
+---
+layout: old_post
+title: Jester-RESTfullなRails向けJavaScriptライブラリ
+permalink: /tatsuya/show/301-jester-restfull-rails-javascript
+---
+<p>
+<a href="http://www.flickr.com/photos/28646244@N00/448483180/" title="Photo Sharing"><img src="http://farm1.static.flickr.com/180/448483180_b9dda761b2_o.jpg" width="603" height="535" alt="JesterとFireBugs" /></a>
+</p>
+<p class="clear">
+RESTfullなRailsのためのJavaScriptライブラリ <a href="http://giantrobots.thoughtbot.com/2007/4/2/jester-javascriptian-rest">Jester</a> がヤバイ、素敵すぎる。
+</p><p>
+<a href="http://giantrobots.thoughtbot.com/2007/4/2/jester-javascriptian-rest">:: GIANT ROBOTS SMASHING INTO OTHER GIANT ROBOTS :: Jester: JavaScriptian REST</a>
+</p><p>
+上のサイトを見てもらえば一目瞭然だけど、RESTfullなRails WEBサービスへシームレスにアクセスできている。
+<br />例えば、以下のような流れを試すと分かり易い
+</p><pre>ruby script/generate scaffold_resource Book title:string review:text
+//titleとreviewを持ったBookというリソースがあるとして
+rake migrate
+ruby script/server start
+//Rails側準備完了
+
+//以下JavaScript環境、JesterをFireBugs上でテスト
+&gt;&gt;&gt; Base.model("Book","http://localhost:3000","book","books")
+&gt;&gt;&gt; ruby = Book.create({title: "オブジェクト指向スクリプト言語Ruby", review: "巻末の用語集が面白い"})
+POST http://localhost:3000/books.xml (400ms)prototype.js (line 866)
+&gt;&gt;&gt; ruby.id
+5
+&gt;&gt;&gt; delete ruby
+true
+
+&gt;&gt;&gt; ruby = Book.find(5)
+GET http://localhost:3000/books/6.xml (146ms)prototype.js (line 866)
+
+&lt;?xml version="1.0" encoding="UTF-8"?&gt;
+&lt;book&gt;
+ &lt;id type="integer"&gt;6&lt;/id&gt;
+ &lt;review&gt;巻末の用語集が面白いだよ&lt;/review&gt;
+ &lt;title&gt;オブジェクト指向スクリプト言語Ruby&lt;/title&gt;
+&lt;/book&gt;
+
+&gt;&gt;&gt; ruby.title
+"オブジェクト指向スクリプト言語Ruby"
+&gt;&gt;&gt; ruby.review
+"巻末の用語集が面白いだよ"
+&gt;&gt;&gt; ruby.title = "オブジェクト指向スクリプト言語Ruby アスキー出版"
+"オブジェクト指向スクリプト言語Ruby アスキー出版"
+&gt;&gt;&gt; ruby.save()
+POST http://localhost:3000/books/5.xml (147ms)prototype.js (line 866)
+&gt;&gt;&gt; delete ruby
+true
+
+&gt;&gt;&gt; ruby = Book.find(5)
+GET http://localhost:3000/books/5.xml (411ms)prototype.js (line 866)
+&gt;&gt;&gt; ruby.title
+"オブジェクト指向スクリプト言語Ruby アスキー出版"
+</pre><p>
+のように、まるで本当のActiveRecordみたいにスマートだ。ActiveRecordがRubyオブジェクトをSQLへ変換してDBへ投げるように、JesterがJavaScriptオブジェクトをXMLに変換してRailsへ投げている。しびれる
+</p><p>
+是非一度 FireBugs辺りで触って試して欲しい、サーバ側はもちろん scaffold_resouce で作ったRailsで。ちなみに Jester.js のソースを見ると300行くらいで非常にシンプル &#38; 軽量、短いし一度読んでみようかな、機能追加も楽にできそうだ。
+</p><p>
+<a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester">まとめを追記した</a>
+</p>
+

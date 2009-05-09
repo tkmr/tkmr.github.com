@@ -1,0 +1,37 @@
+---
+layout: old_post
+title: Google Social Graph API と fooo.name
+permalink: /tatsuya/show/412-google-social-graph-api-fooo-name
+---
+<h2>Google Social Graph API</h2>
+<p>Googleが面白いAPIを出した、Web上にあるソーシャル情報に関するメタデータ（XFNとFOAF）をGoogleがクロールしてWebAPI化する <a href="http://code.google.com/apis/socialgraph/">Google Social Graph API</a></p>
+<p>これに合わせて <a href="http://fooo.name/">fooo.name</a> の本人リンクにも、メタデータとして rel="me" を付けました（メタデータ的に "me" は意味が間違っている気もするけど）<a href="http://fooo.name/accounts/tkmr">http://fooo.name/accounts/tkmr</a></p>
+<p>これでfooo.nameが整えたデータもGoogle APIに反映されるかな。そういえば昔 fooo.nameでもXFN解析やろうかなと思ったけど「XFNなんてどうせ誰もつけてねえよ」と思って無視してた、でもこう見ると意外に面白いな。。</p>
+<p>例えばTwitter、Twitterは "me" や "contact" というXFNのメタデータを埋め込んでいるので上手くソーシャルグラフが取れてる。</p>
+<p><a href="http://socialgraph-resources.googlecode.com/svn/trunk/samples/findcontacts.html?q=http%3A%2F%2Ftwitter.com%2Ftkmr">http://socialgraph-resources.googlecode.com/svn/trunk/samples/findcontacts.html?q=http%3A%2F%2Ftwitter.com%2Ftkmr</a><br /></p>
+<p>逆にXFNやFOAFを埋め込んでないサイトの関係は取れない、http://blog.tkmr.org/ と http://twitter.com/tkmr が "me" の関係なのは自分（や一部の人）は判るけどメタデータとしてマークアップしてないのでGoogleには判らない。まあ当然の話だけど。</p>
+<h2>メタデータ</h2>
+<p>Social Graph API に近い目的をもった<a href="http://fooo.name/">fooo.name</a> はSocial Graph API があれば要らないか？と考えると、fooo.nameは他人がメタデータを補完する、Social Graph APIは本人が書いたorシステムが書いたメタデータを集める。レイヤーの違いというポジションがあるかも。fooo.nameの利用者がカオスなWebにメタデータを補完してくれる。</p>
+<p><img src="http://img.skitch.com/20080203-x23eduwxbimwsr98dqgdhcs9s8.jpg" /></p>
+<p class="clear">Social Graph API はGoogleらしいアプローチで面白いし王道だと思う。でも現実的にWebの大部分にはメタデータが付いてないし、自分のサイトにリンクを貼るとき rel="me" を付ける人なんてネットユーザの1%にもすぎないと思う。</p>
+<p>例えば、皆が "次のページ" へのリンクにメタデータ rel="next" を付けるとAutoPagerize（とOpera）で超快適にネットブラウジングできるけど、それを強制することはできないし、なかなかそう上手くもいかないので AutoPagerizeはWikiで各サイトのメタデータ（SITEINFO）を登録して人間が補完している。なんだかんだで microformats が本当に世界中で整備されるのは、Web 99.0 ぐらいまで待つ必要があるのかなーと思う。ので今はある程度人間が補完する部分も必要なんじゃないかな；)</p>
+<p>ちなみにこの辺、otsuneさんが「メタデータとしてxFolkを付けよう」と啓蒙活動をしてて偉いと思う。<a href="http://www.otsune.com/diary/2007/11/08/1.html#200711081">http://www.otsune.com/diary/2007/11/08/1.html#200711081</a></p>
+<p><span style="font-size: 18px; font-weight: bold;">Googleと分散クローラ</span><br /></p>
+<p>結局、XFNやFOAFをクロールするだけなら、今回Googleは技術的に大した事やってないとも言える。まあ、それは冗談として；D</p>
+<p>Googleは数億オーダーのデータを扱える、その量が凄い。数千台のサーバ群が常時動いててWebをクロールしまくってる、でクロールしたテラバイト級のデータをGFSなんかにガンガンぶちこんで、MapReduceで数千台規模のサーバ群が解析する。想像だけどおおまかにこんな情報工場が24時間365日フル稼働してるんだと思う。十二分に凄い。</p>
+<p>これと同じことを個人でやるのは余りにもつらい、、のでオープンな分散Webクローラがあれば面白いのかなと最近思う。常時Webをクロールし続けるサーバ群のP2Pネットワークがあって、URLのドメインとかをキーにして分散ハッシュテーブル的に目的のピアを探索する、とか。XPathで //a[@rel="me"] とクエリーを投げるとマッチするページを返す、とか。</p>
+<p>- *.user.jsというファイル名</p>
+<p>- @include http://example.com/* という文字列が含まれる</p>
+<p>ページを探すクエリーを投げる事ができれば、http://example.com 向けのGreasemonkeyスクリプトのリストを取れる。とか色々できそう。</p>
+<p>「ネットに 繋がってないパソコン ただの箱」じゃないけど、Webにある情報だけで十分相当な事ができる。ちょうど今日クリップボードをWebで共有するサービス <a href="http://jp.techcrunch.com/archives/controlc-turning-cut-paste-into-a-web-service">ControlC</a> というのを見つけて登録してみた。Win/Mac/Linux 用のネイティブアプリをインストールして、Ctrl+C するだけでWebにアップされるというサービスで「これは面白い！」と思ったけど、いざPCの中を探してもこれといってクリップしたい情報がない。しかたないのでWeb上のページをクリップ試してみたんだけど、これならTumblr + Tomblooで十分だった；D</p>
+<p>続々と情報にURLが付いてWebに繋がってきている、あとはWebから目的のデータを取り出すクエリーを変えるだけで相当色々な可能性があるのに、現状それを自由にできるのはGoogleだけでまだまだ試し尽くされていないってのはもったいない。<br /></p>
+<p>そういえば分散型クローラと言えば「<a href="http://buzztter.com/ja">buzztter</a>の裏側で動いているTwitter用クローラが、Twitterのトラフィックが膨大で大変。分散クローラを作りたい」という話も見た事がある</p>
+<p style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font: 12px Helvetica;"></p>
+<p style="margin-top: 0px; margin-right: 0px; margin-bottom: 0px; margin-left: 0px; font: 12px Helvetica;"><a href="http://d.hatena.ne.jp/darashi/20071106/1194365071">[buzztter]buzztterの裏側とその周辺技術</a></p>
+<p>twitterのデータをキャッシュしてインデックスし続けるサーバ群がいれば、今盛り上がっているキーワードを抽出するクエリー (buzztter) 以外にも、場所／時間で抽出するクエリ、@名前で行われるコミュニケーションの流れを抽出するクエリ、、まだまだ色々な切り出し方を試せると思う。</p>
+<p>Googleもきっと内部では、Webクローラが収集した一次データは各サービスで共有して、メインの検索用に加工した二次データ／イメージ検索用の二次データ／Social Graph API用の二次データ・・・とそれぞれ加工してる、んだと思う。極論すれば</p>
+<p>- イメージ検索 - //img</p>
+<p>- Social Graph API - //a[@rel="me"]</p>
+<p>と膨大な一次データからそれぞれ違うクエリーで切り出している、と言えなくもない。かも。</p>
+
+

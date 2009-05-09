@@ -1,0 +1,67 @@
+---
+layout: old_post
+title: いつも読んでるRSSの持ち主をtako3.comとfooo.nameから探してTwitterでFollow
+permalink: /tatsuya/show/403-rss-tako3-com-fooo-name-twitter-follow
+---
+<p>
+ちょっと面白かった。
+</p><p>
+<a href="http://e8y.net/blog/2007/10/24/p204.html">いつも読んでる人を follow - Elementary</a>
+</p><p>
+まずLDRで購読してるRSSをOPMLでエクスポート、次に <a href="http://tako3.com/">tako3.com</a> と <a href="http://fooo.name/">fooo.name</a> からURL全件取得。OPMLとJSONをパースしてtwitterのアカウントを探して一括Follow。
+<br />良いな〜、面白そうなので真似してみる。
+</p><p>
+まずLDRからOPMLエクスポート、全部ってのは多すぎるのでレート "5" のフィードのみに絞った。
+<br />この方法を使った <a href="http://d.hatena.ne.jp/margin/20070707/livedoor_reader_fastladder_rate">http://d.hatena.ne.jp/margin/20070707/livedoor_reader_fastladder_rate</a>
+</p><p>
+あとはRubyでパース、パース、パース
+<br />レート 5 のフィードが160個くらい、うちTwitterのアカウントが見つかったのが50人くらいだった。（むむ、もっとデータを充実する必要があるな＞fooo.name）
+<br />でTwitterAPIから大量Follow ：）すでにFollowしてる人はエラーになる、結果25人くらい。
+</p><p>
+こんな感じでやりました。
+</p><pre class="source">
+require <span class="str">"rexml/document"</span>
+require <span class="str">"open-uri"</span>
+require <span class="str">"net/http"</span>
+
+opml_name = <span class="str">"export.xml"</span> <span class="comment">#Download from LDR!!</span>
+tako3 = <span class="str">"http://tako3.com/json/all"</span>
+fooo = <span class="str">"http://fooo.name/tako3/json/all"</span>
+
+twitter_path = <span class="str">"/friendships/create"</span>
+twitter_account = <span class="str">"USERID"</span> <span class="comment">#twitter account</span>
+twitter_password = <span class="str">"PASSWORD"</span> <span class="comment">#twitter password</span>
+
+<span class="comment">#opml to twitter url---------------------------------------------------------------</span>
+twitt_maps = {}
+[tako3, fooo].each <span class="keyword">do</span> |name|
+  open(name) <span class="keyword">do</span> |file|
+    file.each_line <span class="keyword">do</span> |line|
+      urls = line.scan(<span class="regex">/"(.*)"/</span>)[<span class="num">0</span>][<span class="num">0</span>].split(<span class="str">" "</span>)
+      <span class="keyword">if</span> twitter_url = urls.find {|url| url =~ Regexp.new(<span class="str">"^http://twitter.com/"</span>) }
+        urls.each <span class="keyword">do</span> |url|
+          twitt_maps[url] = twitter_url
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+opml_twitters = []
+REXML::Document.new(open(opml_name)).elements[<span class="str">"/opml/body/outline/outline[@title=&#38;#39;5&#38;#39;]"</span>].each <span class="keyword">do</span> |element|
+  url = element.attributes[<span class="str">"htmlUrl"</span>] <span class="keyword">if</span> element.class == REXML::Element
+  opml_twitters &lt;&lt; twitt_maps[url].chomp(<span class="str">"/"</span>).scan(<span class="regex">/twitter\.com\/(.*)/</span>)[<span class="num">0</span>][<span class="num">0</span>] <span class="keyword">if</span> twitt_maps[url]
+<span class="keyword">end</span>
+opml_twitters.uniq!
+
+<span class="comment">#do post to twitter----------------------------------------------------------------</span>
+opml_twitters.each <span class="keyword">do</span> |name|
+  req = Net::HTTP::Post.new(<span class="str">"#{twitter_path}/#{name}.xml"</span>)
+  req.basic_auth twitter_account, twitter_password
+  Net::HTTP.start(<span class="str">"twitter.com"</span>, <span class="num">80</span>) <span class="keyword">do</span> |http|
+    res = http.request(req)
+    p res.body
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+

@@ -1,0 +1,325 @@
+---
+layout: old_post
+title: RESTなWebサービスをマウントするRESTファイルシステム、FUSEで作ってみた
+permalink: /tatsuya/show/352-rest-web-rest-fuse
+---
+<p>
+FUSE用のRubyライブラリで、FuseFSてのがあるのを最近知った
+</p><p>
+<a href="http://kitaj.no-ip.com/tdiary/20070507.html#p01">Rubyの</a><a href="http://kitaj.no-ip.com/tdiary/20070507.html#p01">FuseFS</a><a href="http://kitaj.no-ip.com/tdiary/20070507.html#p01">使って</a><a href="http://kitaj.no-ip.com/tdiary/20070507.html#p01">twitter file system</a><a href="http://kitaj.no-ip.com/tdiary/20070507.html#p01">を作ってみた</a>
+</p><p>
+Rubyで手軽にファイルシステムを構築できるそうな。面白そうなので、ひとつ試しにRESTなWebサービスをローカルにマウントするRESTファイルシステムを作ってみた。
+<br />
+<a href="http://www.flickr.com/photos/28646244@N00/597185393/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1087/597185393_d563b07652_o.png" width="700" height="593" alt="RESTfs.png" /></a>
+</p><p class="clear">
+（http://localhost:3000/books/3.xml へアクセスして中身を表示）
+<br />あと外部Webサービスをローカルにマウント！てのがやりたかったので、TwitterとTumblrのAPIをマウントしてみた。
+</p><p>
+<strong>
+<br />$ cat ~/restfs/TwitterStatus/user_timeline/117011742/text  &gt;  ~/restfs/TumblrAPI/write</strong>
+</p><p>
+こんな感じで普通にファイル操作をすると、Twitter <a href="http://twitter.com/tkmr/statuses/117011742">http://twitter.com/tkmr/statuses/117011742</a> から Tumblr <a href="http://tkmr.tumblr.com/post/4104854">http://tkmr.tumblr.com/post/4104854</a> へポスト。
+</p><p>
+<span style="font-size:13pt;"><strong>サーバ準備</strong></span>
+</p><p>
+手始めに手元にあったこんなクラスへアクセスしてみる、Railsでさくっと。
+<br /><strong>ruby script/generate scaffold_resource Book title:string rate:int review:string</strong>
+<br />//タイトル（title）とレビュー（review）を文字列でレート（rate）をIntで持つBookクラス
+<br />ruby script/srever start で待ち受けておく
+</p><p>
+<span style="font-size:13pt;"><strong>開発環境の準備</strong></span>
+<br />自分のPCはMacなので、MacFUSEをインストール
+<br /><a href="http://code.google.com/p/macfuse/">http://code.google.com/p/macfuse/</a>
+<br />今回は <a href="http://macfuse.googlecode.com/files/MacFUSE-Core-0.4.0.dmg">MacFUSE-Core-0.4.0.dmg</a> をダウンロード、普通にインストール
+</p><p>
+FUSEへのRubyブリッジFuseFS、MacOSX対応した物が↓らしいので
+<br /><a href="http://www.datanoise.com/articles/2007/3/9/macfuse-and-ruby-fusefs-extension">http://www.datanoise.com/articles/2007/3/9/macfuse-and-ruby-fusefs-extension</a>
+<br /><strong>svn co http://svn.datanoise.com/fusefs-osx
+<br />cd fusefs-osx
+<br />make
+<br />sudo make install</strong>
+<br />インストール、すんなり上手くいった
+</p><p>
+あとActiveResourceを単体で使いたいので
+<br /><strong>sudo gem install activeresource --source http://gems.rubyonrails.org</strong>
+</p><p>
+gemから入れておいた
+</p><p>
+<span style="font-size:13pt;"><strong>CRUD</strong></span><span style="font-size:13pt;"><strong>を実装</strong></span>
+<br />RubyでFuseFS::MetaDirを継承したクラスを実装していく、適当に以下のようにしてみました。富豪的プログラミングだなー
+</p><pre class="source">
+require <span class="str">'fusefs'</span>
+
+<span class="keyword">class</span> RESTfs &lt; FuseFS::MetaDir
+   <span class="keyword">def</span> initialize resource
+     @resource=resource
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">カレントディレクトリーのファイル一覧を返す</span><span class="comment"> - ls dirname/</span>
+   <span class="keyword">def</span> contents path
+     action, id, key = scan_path path
+     <span class="keyword">unless</span> action <span class="keyword">then</span>
+       <span class="keyword">return</span> @resource.actions
+     <span class="keyword">end</span>
+     <span class="keyword">unless</span> id <span class="keyword">then</span>
+       resources = action==<span class="str">"all"</span> ? @resource.find(<span class="sym">:all</span>) : @resource.find(action)
+       <span class="keyword">return</span> resources.map{|r| r.id.to_s }
+     <span class="keyword">end</span>
+     @resource.find(id).attributes.keys
+   <span class="keyword">end</span>
+   
+   <span class="comment">#</span><span class="comment">ディレクトリーとファイルの判定</span>
+   <span class="keyword">def</span> directory? path
+     action, id, key = scan_path path
+     key ? <span class="keyword">false</span> : <span class="keyword">true</span>
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> file? path
+     !directory?(path)
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">ファイルの中身を返す</span><span class="comment"> - cat filename</span>
+   <span class="keyword">def</span> read_file path
+     action, id, key = scan_path path
+     item = @resource.find(id)
+     item.attributes[key].to_s + <span class="str">"\n"</span>
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> size(path)
+     read_file(path).size
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">ファイルへ書き込み</span><span class="comment"> - echo "hoge" &gt; filename</span>
+   <span class="keyword">def</span> can_write? path
+     file?(path)
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> write_to path, body
+     action, id, key = scan_path path
+     <span class="keyword">if</span> key <span class="keyword">then</span>
+       item = @resource.find(id)
+       item[key] = body
+       item.save
+     <span class="keyword">end</span>
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">ファイル削除</span><span class="comment"> - rm filename</span>
+   <span class="keyword">def</span> can_delete? path
+     file?(path)
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> delete path
+     action, id, key = scan_path path
+     @resource.find(id).destroy <span class="keyword">if</span> id
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">フォルダ作成</span><span class="comment"> - mkdir newdir</span>
+   <span class="keyword">def</span> can_mkdir? path
+     <span class="keyword">false</span>
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> mkdir path
+   <span class="keyword">end</span>
+
+   <span class="comment">#</span><span class="comment">フォルダ削除</span><span class="comment"> - rmdir dirname</span>
+   <span class="keyword">def</span> can_rmdir? path
+     action, id, key = scan_path path
+     <span class="keyword">return</span> <span class="keyword">false</span> <span class="keyword">if</span> key
+     id ? <span class="keyword">true</span> : <span class="keyword">false</span>
+   <span class="keyword">end</span>
+   <span class="keyword">def</span> rmdir path
+     action, id, key = scan_path path
+     @resource.find(id).destroy <span class="keyword">if</span> id
+   <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p>
+ざっくりとCRUD一通り書いたので使ってみる
+</p><pre class="source">
+require <span class="str">'restfs'</span>
+require <span class="str">'rubygems'</span>
+gem <span class="str">'activeresource'</span>
+require <span class="str">'active_resource'</span>
+
+<span class="keyword">class</span> Book &lt; ActiveResource::Base
+  <span class="keyword">self</span>.site = <span class="str">"http://localhost:3000/"</span>
+  <span class="keyword">self</span>.logger = Logger.new($stderr)
+  <span class="keyword">def</span> <span class="keyword">self</span>.actions
+    [<span class="str">"all"</span>]
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+
+<span class="keyword">if</span> (File.basename($0) == File.basename(<span class="keyword">__FILE__</span>))
+  root = FuseFS::MetaDir.new
+  root.mkdir(<span class="str">"/Book"</span>, RESTfs.new(Book))
+  FuseFS.set_root(root)
+  FuseFS.mount_under(ARGV[<span class="num">0</span>])
+  FuseFS.run
+<span class="keyword">end</span>
+</pre><p>
+これをターミナルで立ち上げる ruby bookfs.rb ~/restfs/（ホームへrestfsという空ディレクトリを作成しておく）
+</p><pre class="source">
+~ tatsuya$ cd restfs/Book
+~<span class="regex">/restfs/</span>Book tatsuya$ ls
+all
+~<span class="regex">/restfs/</span>Book tatsuya$ cd all
+~<span class="regex">/restfs/</span>Book/all tatsuya$ ls
+<span class="num">1</span>  <span class="num">11</span> <span class="num">13</span> <span class="num">15</span> <span class="num">17</span> <span class="num">19</span> <span class="num">20</span> <span class="num">22</span> <span class="num">24</span> <span class="num">26</span> <span class="num">28</span> <span class="num">3</span>  <span class="num">31</span> <span class="num">33</span> <span class="num">35</span> <span class="num">37</span> <span class="num">8</span>
+<span class="num">10</span> <span class="num">12</span> <span class="num">14</span> <span class="num">16</span> <span class="num">18</span> <span class="num">2</span>  <span class="num">21</span> <span class="num">23</span> <span class="num">25</span> <span class="num">27</span> <span class="num">29</span> <span class="num">30</span> <span class="num">32</span> <span class="num">34</span> <span class="num">36</span> <span class="num">7</span>  <span class="num">9</span>
+~<span class="regex">/restfs/</span>Book/all tatsuya$ cd <span class="num">3</span>
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ ls
+id     rate   review title
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ cat title
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$       
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ cat title
+てすとタイトル
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ ls -ltr &gt;&gt; title
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ cat title
+てすとタイトル
+total <span class="num">4</span>
+-rw-rw-rw-   <span class="num">1</span> tatsuya  tatsuya  <span class="num">16</span>  <span class="num">6</span> <span class="num">23</span> <span class="num">16</span>:<span class="num">02</span> title
+-rw-rw-rw-   <span class="num">1</span> tatsuya  tatsuya  <span class="num">13</span>  <span class="num">6</span> <span class="num">23</span> <span class="num">16</span>:<span class="num">02</span> review
+-rw-rw-rw-   <span class="num">1</span> tatsuya  tatsuya   <span class="num">2</span>  <span class="num">6</span> <span class="num">23</span> <span class="num">16</span>:<span class="num">02</span> rate
+-rw-rw-rw-   <span class="num">1</span> tatsuya  tatsuya   <span class="num">2</span>  <span class="num">6</span> <span class="num">23</span> <span class="num">16</span>:<span class="num">02</span> id
+~<span class="regex">/restfs/</span>Book/all/<span class="num">3</span> tatsuya$ 
+</pre><p>
+普通にローカルファイルのように操作できる。お手軽で楽しいな〜、サーバ側のログを見ると
+</p><pre>
+GET http://localhost:3000/books.xml
+--&gt; 200 OK (4775b 0.37s)
+GET http://localhost:3000/books/3.xml
+--&gt; 200 OK (224b 0.32s)
+GET http://localhost:3000/books/3.xml
+--&gt; 200 OK (224b 0.33s)
+・・・・・・・・・・・・・・
+PUT http://localhost:3000/books/3.xml
+--&gt; 200 OK (1b 0.32s)
+</pre><p>
+GETアクセスが大変なことに！！富豪的だが気にしない
+</p><p>
+次は外部サービスをマウントしてみる、TwitterAPIとTumblrAPIをマウントしてTwitterから取ってきた発言をTumblrへポスト。まずTwitterから
+</p><pre class="source">
+<span class="keyword">module</span> Twitter
+  USER = <span class="str">"Twitter</span><span class="str">アカウント</span><span class="str">"</span>
+  PASSWORD = <span class="str">"</span><span class="str">パスワード</span><span class="str">"</span>
+  <span class="keyword">class</span> Status &lt; ActiveResource::Base
+    <span class="keyword">self</span>.site = <span class="str">"http://#{Twitter::USER}:#{Twitter::PASSWORD}@twitter.com/"</span>
+    <span class="keyword">self</span>.logger = Logger.new($stderr)
+    <span class="keyword">def</span> <span class="keyword">self</span>.actions
+      [<span class="str">"public_timeline"</span>,<span class="str">"user_timeline"</span>,<span class="str">"friend_timeline"</span>]
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> <span class="keyword">self</span>.find *args
+      <span class="keyword">if</span> args[<span class="num">0</span>].to_s.to_i.to_s.size == args[<span class="num">0</span>].to_s.size <span class="keyword">then</span>
+        <span class="keyword">super</span>(<span class="str">"show/#{args[0]}"</span>)
+      <span class="keyword">else</span>
+        <span class="keyword">self</span>.get(args).map {|r| <span class="keyword">self</span>.new(r) }
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre><p>
+とりあえずReadだけ。Tumblrも同じように書こう思ったけどAPIとActiveResourceが相性悪そうだったので普通にNet::HTTPでアクセスした、ソースは長くなったので一応最後に貼り付けときます。それではマウントして試してみる
+</p><pre class="source">root = FuseFS::MetaDir.new
+root.mkdir(<span class="str">"/TwitterStatus"</span>, RESTfs.new(Twitter::Status))
+root.mkdir("/TumblrAPI", Tumblr::ApiFS.new)
+FuseFS.set_root(root)
+FuseFS.mount_under(ARGV[<span class="num">0</span>])
+FuseFS.run
+</pre><p>
+これを実行してマウント、次に別のターミナルを立ち上げて普通にシェルからファイル操作してみる
+</p><pre><span class="comment">#</span><span class="comment">ローカルファイルとしてアクセスすれば</span>
+~<span class="regex">/restfs/</span>TwitterStatus/public_timeline tatsuya$ ls <span class="num">117011742</span>
+created_at id         text       user
+~<span class="regex">/restfs/</span>TwitterStatus/public_timeline tatsuya$ cat <span class="num">117011742</span>/text
+なんかさっきtwitter落ちてた？
+
+<span class="comment">#TwitterAPI</span><span class="comment">へアクセスしている</span>
+GET http<span class="sym">:/</span>/twitter.com:<span class="num">80</span>/statuses/show/<span class="num">117011742</span>.xml
+--&gt; <span class="num">200</span> OK (<span class="num">589</span>b <span class="num">0.43</span>s)
+
+<span class="comment">#Twitter</span><span class="comment">の発言を</span><span class="comment">Tumblr</span><span class="comment">へポスト</span>
+~<span class="regex">/restfs/</span>TwitterStatus/public_timeline tatsuya$ cat <span class="num">117011742</span>/text &gt; ~<span class="regex">/restfs/</span>TumblrAPI/write
+</pre><p>
+ＯＫぽい。<strong>
+<br />$ cat ~/restfs/TwitterStatus/user_timeline/117011742/text  &gt;  ~/restfs/TumblrAPI/write</strong>
+<br />で、Twitter <a href="http://twitter.com/tkmr/statuses/117011742">http://twitter.com/tkmr/statuses/117011742</a> から Tumblr <a href="http://tkmr.tumblr.com/post/4104854">http://tkmr.tumblr.com/post/4104854</a> へポスト。
+</p><p>
+本当は <strong>$cat ~/restfs/TwittreStatus/user_timeline/* | grep `date +%Y%m%d` | ~/restfs/TumblrAPI/write</strong> とかシェルスクリプトに書いて、cronで自動更新にして。本物のUNIXパイプでWebサービスをマッシュアップ! Web1.0世代のPlagger (w  みたいなネタを書きたかったけど、時間が無くなったのでそれはまた今度。
+</p><p>
+しかし面白いね〜FuseFS。RSSfsなんて作ると面白いかも、またはAtomPPfsとか。ただMacのFinderで外部サービスのフォルダを開くとかなり激しいアタックがWebサービスへ行くのでw やっぱ実用的では無いな、LAN内にあるサーバへ繋ぐならなんとかなるかも。あとちゃんとキャッシュの仕組みを作ればまた別だろうけど。
+</p><p>
+それにしてもweb上のリソース とローカル上のリソースが混在する環境って楽しいね。ネットOSというか、ネット上のリソースをローカルリソースと同じ意識で扱う（またはネット上に全てのリソースを置く）ことが実用的になったら、その用途に最適化したOSが出てくるのかな。そうすると通信速度の進化はまだまだ続く必要があるな、今のローカルHDDがSerialATA接続で 1.2Gbps/秒 と考えれば家庭用の光ファイバーでも単純な速度は何とかなりそう？むしろサーバの負荷やネットのハブになるエクスチェンジポイントの負荷が問題なのかも。データセンタ内でサーバを分散しても、回線の負荷は下がらないので、全体でみるとデータセンタの分散が良いのかな。
+</p><p>
+あと回線速度が十分高速になっても、日本からアメリカのWebサービスにアクセスするならレイテンシが問題になるのか、、どんな技術でも光速が限界になるから１秒で地球７周半、ls コマンド打って結果が返るまで最速0.1秒は遅いか早いか。いくら回線速度が早くてもレイテンシが高いとスーファミのスト2ターボみたいになるのかな？w　そうするとやっぱデータセンタの分散やWinnyみたいな情報のキャッシュを分散するモデルが有効になってくるのかな、光速の限界を超えるためにプロセスを微細化する最近のCPUみたい。速度が伸びないなら距離を縮めよう、みたいな。
+</p><p>
+じゃあ究極の負荷分散はP2Pでクライアントをサーバにして、負荷の中心を無くしてしまうのが良いのかな？Google GearでブラウザがストレージとWebサーバを持ったから、あとはクロスサイトアクセスの制限を取っ払っちゃえばw どうだろ。データの同期・整合性は取り難くなるのでサーバ型とのハイブリットとか、例えばニコニコ動画のコメントは軽いのでサーバで同期して、映像はBittorrent的なモデルで配信するとか・・・・・
+</p><p>
+うーんなんだろ。まあ結論としては、FUSEfs面白い：）ということで
+</p><p>
+===============================================
+<br />一応TumblrFSのソースを↓に貼っておきます、適当ですが。
+</p><pre class="source">
+<span class="keyword">module</span> Tumblr
+  USER = <span class="str">"</span><span class="str">ユーザ名</span><span class="str">"</span>
+  SITE = <span class="str">"http://#{USER}.tumblr.com/api"</span>
+  EMAIL = <span class="str">"mail</span><span class="str">アドレス</span><span class="str">"</span>
+  PASS = <span class="str">"</span><span class="str">パスワード</span><span class="str">"</span>
+  <span class="keyword">class</span> ApiFS &lt; FuseFS::MetaDir
+    <span class="keyword">def</span> contents path
+      [<span class="str">"read"</span>,<span class="str">"write"</span>]
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> directory? path
+      <span class="keyword">false</span>
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> file? path
+      !directory?(path)
+    <span class="keyword">end</span>
+    
+    <span class="keyword">def</span> read_file path
+      action, hoge = scan_path(path)
+      <span class="keyword">return</span> <span class="str">"Please insert a text!!\n"</span> <span class="keyword">if</span> action==<span class="str">"write"</span>
+      result = <span class="str">""</span>
+      open(<span class="str">"#{SITE}/#{action}"</span>) <span class="keyword">do</span> |f|
+        result += f.read
+      <span class="keyword">end</span>
+      result
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> size path
+      read_file(path).size
+    <span class="keyword">end</span>
+    
+    <span class="keyword">def</span> can_write? path
+      scan_path(path)[<span class="num">0</span>]==<span class="str">"write"</span>
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> write_to path, text
+      <span class="keyword">if</span> can_write?(path) <span class="keyword">then</span>
+        <span class="keyword">begin</span>
+          title = text
+          body = text
+          param = <span class="str">""</span>
+          {<span class="str">"email"</span>=&gt;EMAIL,<span class="str">"password"</span>=&gt;PASS,<span class="str">"type"</span>=&gt;<span class="str">"regular"</span>,<span class="str">"title"</span>=&gt;title,<span class="str">"body"</span>=&gt;body}.each <span class="keyword">do</span> |key,value|
+            param += <span class="str">"#{key}=#{URI.encode(value)}&#38;"</span>
+          <span class="keyword">end</span>
+          param.chomp!(<span class="str">"&#38;"</span>)
+          res = Net::HTTP.start(<span class="str">"www.tumblr.com"</span>, <span class="num">80</span>) <span class="keyword">do</span> |http|
+            http.post(<span class="str">"/api/write"</span>, param, {<span class="str">&#38;#39;Content-type&#38;#39;</span>=&gt;<span class="str">&#38;#39;application/x-www-form-urlencoded&#38;#39;</span>})
+          <span class="keyword">end</span>
+        <span class="keyword">rescue</span>
+          p <span class="str">"Email or Password error!! : tumblr"</span>
+        <span class="keyword">end</span>
+      <span class="keyword">end</span>
+    <span class="keyword">end</span>
+    
+    <span class="keyword">def</span> can_delete? path
+      can_write? path
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> delete path
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> can_mkdir? path
+     <span class="keyword">false</span>
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> mkdir path
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> can_rmdir? path
+      <span class="keyword">false</span>
+    <span class="keyword">end</span>
+    <span class="keyword">def</span> rmdir path
+    <span class="keyword">end</span>
+  <span class="keyword">end</span>
+<span class="keyword">end</span>
+</pre>
+

@@ -1,0 +1,84 @@
+---
+layout: old_post
+title: RubyにCのコードを埋め込むRubyInlineが面白い
+permalink: /tatsuya/show/299-ruby-c-rubyinline
+---
+<p>
+RubyInline面白い！特徴としては
+</p><ul>
+<li>CのコードをRubyへシンプルに埋め込む</li>
+<li>コンパイルは不要（裏でやってくれる）</li>
+<li>コンパイル結果はキャッシュする</li>
+<li>インストールはGemから</li>
+</ul><p>
+ていう感じ。とりあえず10000回加算でも試してみる、まずgemからインストール
+</p><pre>
+gem install RubyInline
+</pre><p>
+いつも通り完了、で使ってみる
+</p><pre>
+require "rubygems"
+require "inline"
+
+class Test
+  inline do |builder|
+    builder.c &lt;&lt;-EOF
+      int plus_inline(int x, int y){
+        int z=0;
+        int a;
+        for(a=0; a&lt;y; a++){
+          z = z + x;
+        }
+        return z;
+      }
+    EOF
+  end
+  
+  def plus_ruby(x,y)
+    z = 0
+    y.times{ 
+      z += x
+    }
+    return z
+  end
+end
+
+test = Test.new
+
+time = Time.now
+p test.plus_inline(1,100000)
+inline_time = Time.now - time
+
+time = Time.now
+p test.plus_ruby(1,100000)
+ruby_time =Time.now - time
+
+p ruby_time/inline_time
+</pre><p>
+こんな感じで行けるらしい、凄い違和感があるけど迷わず実行
+</p><pre>
+$ ruby rubyinline.rb
+100000
+100000
+119.4128113879
+$ ruby rubyinline.rb
+100000
+100000
+170.04469273743
+$ ruby rubyinline.rb
+100000
+100000
+170.68156424581
+</pre><p>
+初回で119倍！２回目以降はコンパイルがキャッシュに乗るから170倍！
+<br />コンパイルのありorなしの差が、1.7倍てのが妙に少ない気もするけどどうなんだろ？
+<br />確かに ~/.ruby_inline というディレクトリの下にキャッシュのファイルが貯まってるみたいだけど
+</p><pre>
+$ cd ~/.ruby_inline/
+$ ls
+Inline_Test_dc80.bundle  Inline_Test_dc80.c
+</pre><p>
+コードが凄い気持ち悪いけど、ボトルネックのポイント・ポイントで使えば面白そう
+<br />負荷対策&#38;高速化の対策として覚えとくと、いつか使う場所が出てくるかも。
+</p>
+

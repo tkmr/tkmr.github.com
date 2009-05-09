@@ -1,0 +1,76 @@
+---
+layout: old_post
+title: MySpaceでOpenSocialアプリケーション OpenIDクライアント を試す ー (2)
+permalink: /tatsuya/show/418-myspace-opensocial-openid-2
+---
+<p>↓ このエントリの続き</p>
+<p style="font: 12.0px Helvetica"></p>
+<p style="font: 12.0px Helvetica"><a href="http://blog.tkmr.org/tatsuya/show/417-myspace-opensocial-openid-1">MySpaceでOpenSocialアプリケーション「OpenIDクライアント」を試す ー (1)</a></p>
+<p style="font: 12.0px Helvetica">引き続き、OpenIDのIdentifier入力からOpenID Provider（以下OP） エンドポイントURLの探索までを実装する</p>
+<p style="font: 12.0px Helvetica"></p>
+<h2>input（入力）</h2>
+<p style="font: 12.0px Helvetica"></p>
+<p>UIとしてIdentifierを入力するフォームを用意、submitにイベントを追加する。今回この辺りはjQueryを使った。</p>
+<p><img src="http://farm4.static.flickr.com/3165/2424401283_6b1794b51e_o.jpg" /></p>
+<pre class="source clear">
+<br />&lt;form <span class="keyword">class</span>=<span class="str">"rp"</span>&gt;<br />  &lt;input id=<span class="str">"identify"</span> type=<span class="str">"text"</span> name=<span class="str">"openid_identifier"</span> /&gt;<br />  &lt;input type=<span class="str">"submit"</span> value=<span class="str">"Sign in"</span> /&gt;<br />&lt;<span class="regex">/form&gt;</span><br /><span class="regex">&lt;script type="text/</span>javascript<span class="str">"&gt;</span><br /><span class="str">  $("</span>form.rp<span class="str">").submit(function(){</span><br /><span class="str">    var ident = $("</span><span class="comment">#identify").attr("value");</span><br />    openid.auth(ident, function(result){<br /><span class="regex">      //some</span>thing <span class="keyword">do</span><br />    });<br />  });<br />&lt;/script&gt;
+</pre>
+<p>formの値を取得し、メインロジックopenid.authを呼ぶ。以後は normalize &gt; discovery &gt; association &gt; authentication &gt; response parse &gt; verify の順に実行していく。</p>
+<p>この辺りはまだOpenSocialに関係無く普通のHTML + JavaScript</p>
+<p>　</p>
+<p>ちなみに処理全体の流れは、大体以下のようになる予定。</p>
+<pre class="source">
+<br />var openid = {<br />  auth: function(request_ident, callback){<br />    var <span class="keyword">self</span> = this;<span class="comment"><br />    //IDの正規化、http://を補足（ 例：tkmr.myopenid.com =&gt; http://tkmr.myopenid.com/ ）<br /></span>    request_ident = <span class="keyword">self</span>.normalize(request_ident);<span class="comment"><br />    //OpenID認証局のエンドポイントURLを探索（ 例：http://tkmr.myopenid.com/ =&gt; http://myopenid.com/server ）<br /></span>    <span class="keyword">self</span>.discovery(request_ident, function(request_option){<br /><span class="comment">      //共有鍵の交換（任意） - 未実装</span><br /><span class="comment">      //var assoc_handle = self.association();</span><br /><span class="comment">      //discoveryで見付かったOpenID認証局エンドポイントURLへ認証リクエストを投げる（IFrameで代用）</span><br /><span class="keyword">      self</span>.auth_request(request_option, function(response){<br /><span class="comment">        //認証結果を確認、IFrameのURLから取得</span><br />        var res = <span class="keyword">self</span>.auth_response_parse(response);<span class="comment">//認証結果の署名を確認</span><br /><span class="keyword">        if</span>(<span class="keyword">self</span>.verify(res)){<br />          callback(res);<br />        }<span class="keyword">else</span>{<br />          callback(<span class="keyword">false</span>);<br />        }<br />      }<br />    }<br />  }<br />}
+</pre><br />
+<h2>normalize（正規化）</h2>
+<p>参考：<span style="color: #0000EE; text-decoration: underline;"><a href="http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#normalization">http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#normalization</a></span></p>
+<p>ユーザの入力したIdentifierの正規化を行う、正式な仕様としては XRI の正規化をサポートする必要があると思うが今回は未実装</p>
+<p>とりあえずIdentifierが http で始まらない場合 http:// を付加しておいた。</p>
+<pre class="source">
+<br />openid.normalize = function(identify){<br />  var new_ident = identify.search(<span class="regex">/^(http|https):\/\//</span>) &gt; <span class="num">0</span> ? identify : <span class="str">"http://"</span> + identify;<br /><span class="keyword">  return</span> new_ident;<br />}
+</pre><br />
+<p style="font: 12.0px Helvetica"></p>
+<h2>discovery（探索）</h2>
+<p>参考：<a href="http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#discovery">http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#discovery</a></p>
+<h3><span style="font-size: 12px; font-weight: normal;">正規化後、Identifier（例：http://tkmr.myopenid.com ）からOPエンドポイントURL（例：http://myopenid.com/server ）を知る必要があり、その探索方法として下記の３種類がある</span></h3>
+<p>　・HTMLベース探索<a href="http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#html_disco"></a></p>
+<p>　・XRI （ <a href="http://d.hatena.ne.jp/ZIGOROu/20080202">XRIのリンク集 - Yet Another Hackadelic</a> ）</p>
+<p>　・Yadis （ <a href="http://gihyo.jp/dev/feature/01/openid/0003?page=2">第3回　OpenIDプロトコルの特徴－DiscoveryとSREG</a> ）</p>
+<p>今回の実装では、<a href="http://lab.koshigoe.jp/en2ja/openid-authentication-2_0.html#html_disco">HTMLベース探索</a> を試す（XRIとYadisによる探索は未実装）</p>
+<pre class="source">
+<br />openid.discovery = function(ident, callback){<br />  switch(ident.split(<span class="str">"://"</span>)[<span class="num">0</span>]){<br /><span class="keyword">  case</span> <span class="str">"http"</span>:<br />    openid.html_discovery(ident, callback);<br /><span class="keyword">    break</span>;<br /><span class="keyword">  case</span> <span class="str">"xri"</span>:<br />    openid.xri_discovery(ident, callback);<br /><span class="keyword">    break</span>;<br />  default:<br />    alert(<span class="str">"error!!!!!"</span>);<br /><span class="keyword">    break</span>;<br />  }<br />}
+</pre><br />
+<h3>HTMLベース探索の実装</h3>
+<p>ユーザのIdentifier（URL）に存在するHTMLを取得し、OPのエンドポイントURLを探し出す。</p>
+<pre>
+<br />例：<br />&lt;html&gt;<br />&lt;head&gt;<br />  &lt;link rel="<strong>openid2.provide</strong>r" href="<strong>認証局エンドポイントURL</strong>" /&gt;<br />&lt;/head&gt;
+</pre>
+<p>まずIdentifier（URL）にあるコンテンツを取得する必要がある、今回はHTTPリクエストを OpenSocial APIの gadgets.io.makeRequest で投げる。<br /></p>
+<pre class="source">
+<br />openid.html_discovery = function(identify, callback){<br />  var params = {};<br />  params.contentType = gadgets.io.ContentType.TEXT;<br />  gadgets.io.makeRequest(identify, function(res){<br /><span class="comment">    //取得結果(HTML)のパース&amp;解析処理</span><br />  }, params);<br />}
+</pre>
+<p>gadgets.io.ContentTypeは XML・JSON・TEXT・FEED の４種類が用意されていて、XMLならXMLHttpRequestのresponseXMLが返ってきたりと、それぞれ想像通りに動く。</p>
+<p>・ContentType：<a href="http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.ContentType.html">http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.ContentType.html</a></p>
+<p>・RequestParameter：<a href="http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.RequestParameters.html">http://code.google.com/apis/opensocial/docs/0.7/reference/gadgets.io.RequestParameters.html</a></p>
+<p>また任意のヘッダをリクエストへ付けることも可能</p>
+<p>・Header ：<a href="http://code.google.com/intl/ja_ALL/apis/opensocial/docs/0.7/reference/gadgets.io.RequestParameters.html#HEADERS">http://code.google.com/intl/ja_ALL/apis/opensocial/docs/0.7/reference/gadgets.io.RequestParameters.html#HEADERS</a></p>
+<pre class="source">
+<br />params[gadgets.io.RequestParameters.HEADERS] = {<span class="str">"Accept-Language"</span> : <span class="str">"ja"</span>};<span style="font-family: Helvetica; white-space: normal;">　</span><br />
+</pre>
+<p>　</p>
+<p>今回の対象はHTMLのため ContentType はTEXT に設定、単純なStringとしてHTMLが返ってくるので、そのHTML内にある目的の &lt;link rel="openid2.provider" href="***" /&gt; タグを探す</p>
+<pre class="source">
+<br />var results = {}<br />var links = res.data.match(<span class="regex">/&lt;link[^&gt;]*&gt;/</span>g);<br /><span class="keyword">for</span>(var i=<span class="num">0</span>; i &lt; links.length; i++){<br />  var link = links[i];<br /><span class="keyword">  if</span>(link.search(<span class="regex">/rel.*openid2.provider/</span>) &gt; <span class="num">0</span>){<br />    results.provider = link.match(<span class="regex">/href="([^"]*)"/</span>)[<span class="num">1</span>];<br />  }<span class="keyword">else</span>{<br /><span class="keyword">    if</span>(link.search(<span class="regex">/rel.*openid2.local_id/</span>) &gt; <span class="num">0</span>){<br />      results.local_id = link.match(<span class="regex">/href="([^"]*)"/</span>)[<span class="num">1</span>];<br />    }<br />  }<br />}<br />callback(results);
+</pre>
+<p>ついでに rel="openid.server" も探しておいた方が良いかも。</p>
+<p>　</p>
+<h3>おまけ：Yadis探索を実装</h3>
+<p>するためにはレスポンスヘッダの内容を知る必要がある、はず。OpenSocial / makeRequestのドキュメントには特に記述が無かったのでレスポンスヘッダへのアクセスは不明・・・</p>
+<p>ただ、makeRequest の通信内容を見る限りでは取得可能なように見える。</p><img src="http://farm3.static.flickr.com/2032/2425995276_e50c14d522_o.jpg" />
+<p class="clear">レスポンスヘッダさえ取れれば、あとは x-xrds-location に設定されたURLにあるXRDS文章を取得し、XRDSの仕様に従ってOPエンドポイントURLを見つける、で良いのかな。</p>
+<p>XRIは・・・、仕様から勉強しておきます：）</p>
+<p>　</p>
+<p>以上、今回はOpenID Providerの認証エンドポイントURLの探索まで実装しました。</p>
+<p>それでは明日へ続く</p>
+
+

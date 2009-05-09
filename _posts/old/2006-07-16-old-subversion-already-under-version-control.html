@@ -1,0 +1,7 @@
+---
+layout: old_post
+title: Subversionでalready under version control
+permalink: /tatsuya/show/16-subversion-already-under-version-control
+---
+<p>死ぬかと思った。。</p><br /><br /><p>SVNで既存のディレクトリコピー =&gt; 新しく、そんで編集して新しいディレクトリを svn add しようと思ったら。。。できない。<br /><br />svn: warning: '*****************.***' is already under version control<br /><br />とか出る、、、、むむむなぜ？このフォルダはまだ無いはずなのに。。。</p><br /><br /><p>svn co したり色々調べたら。.svnっていう隠しフォルダがある！！<br /><br />rm -rf .svn してから、svn add　したらなんとかなったけど。。。。一時間くらい悩んだ。</p><br /><br /><p></p><h3>「svn: warning: ***** is already under version control」には ls -la !!</h3>
+

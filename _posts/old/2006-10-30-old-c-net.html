@@ -1,0 +1,152 @@
+---
+layout: old_post
+title: C# (と.NET) 勉強１
+permalink: /tatsuya/show/114-c-net
+---
+<p>
+急遽C#と.NETを勉強する必要ができて、わーー大変。
+<br />これまでJava & Rubyを使ってきたのでその違いをメモ。
+</p><p>
+&lt;C#の特徴or良いor変な点&gt;
+<br />・静的な型付け
+<br />・namespaceの概念
+</p>・rubyやJavaで言うパッケージみたいな物。namespace Net{ class HTTP{ ・・・・・・ } } でNet.HTTPクラスのようになる
+<br />・namespaceの宣言を行う。System.Console.writeLine("Hello World") が using System; と宣言すれば Console.writeLine("Hello World")となる（まさにパッケージ）
+<p style="text-indent:20pt;">
+
+</p><p style="text-indent:0pt;">
+・定数は３種類
+</p><p style="text-indent:20pt;">
+・リテラル定数
+</p><p style="text-indent:40pt;">
+=&gt; 32はリテラル、32は32であり99ではない（変な翻訳だ）
+</p><p style="text-indent:20pt;">
+・シンボリック定数
+</p><p style="text-indent:40pt;">
+=&gt; <span style="text-decoration:underline;"><strong>const</strong></span> int FreezingPoint = 32; のように定義する
+</p><p style="text-indent:20pt;">
+・列挙型
+</p><p style="text-indent:40pt;">
+=&gt; <span style="text-decoration:underline;"><strong>enum</strong></span> Hoge{  hoge1=1, hoge2=2  }  のように定義、Hoge.hoge1 は1となる
+</p><p style="text-indent:40pt;">
+
+</p><p style="text-indent:0pt;">
+・演算子
+</p><p style="text-indent:20pt;">
+・モジュロ演算子（除算の余りを得る）：1==10%3 はtrue
+<br />・インクリメント：x=1; y=++x; で。 yは1、xは2
+<br />・三項演算子：<strong>return</strong> <strong>x=="true" ? true : false　</strong>xが"true"ならtrueを返す
+</p><p style="text-indent:20pt;">
+
+</p><p style="text-indent:0pt;">
+・ステートメント：for, while, if else , switch, case基本は当然ある。
+</p><p style="text-indent:0pt;">
+・クラスについて
+</p><p style="text-indent:20pt;">
+・ほぼJavaと同じ
+<br />・<span style="text-decoration:underline;"><strong>デストラクタ</strong></span>（ファイナライザ）が独特？：<span style="text-decoration:underline;"><strong>~</strong></span><strong>Hoge(){  }</strong> で定義。GCの時に呼ばれるよ。
+</p><p style="text-indent:40pt;">
+・貴重なリソースはusingステートメント内で使用する
+</p><p style="text-indent:60pt;">
+using(Font font = new Font("Arial",10.0f){
+</p><p style="text-indent:80pt;">
+//処理を記述
+</p><p style="text-indent:60pt;">
+}
+<br />//fontは解放済み
+</p><p style="text-indent:60pt;">
+
+</p><p style="text-indent:20pt;">
+・<span style="text-decoration:underline;"><strong>参照渡し&#38;値渡し</strong></span>：プリミティブ型(int, string, char)は値渡し、それ意外のオブジェクトは参照渡し
+</p><p style="text-indent:40pt;">
+・プリミティブ型を参照渡ししたい場合
+</p><p style="text-indent:60pt;">
+public void Pow( <span style="text-decoration:underline;"><strong>ref</strong></span> int x ){
+</p><p style="text-indent:80pt;">
+x *= x;
+</p><p style="text-indent:60pt;">
+}
+<br />int x = 5;
+<br />hoge.Pow( <span style="text-decoration:underline;"><strong>ref</strong></span> x); と<strong>ref</strong>を引数に付ける。または変数の初期化をあらかじめ行わない場合<span style="text-decoration:underline;"><strong>out</strong></span>を使う
+</p><p style="text-indent:60pt;">
+public void Pow( <span style="text-decoration:underline;"><strong>out</strong></span> int x){
+</p><p style="text-indent:80pt;">
+x = 999;
+</p><p style="text-indent:60pt;">
+}
+<br />hoge.Pow( <span style="text-decoration:underline;"><strong>out</strong></span> x);
+</p><p style="text-indent:60pt;">
+
+</p><p style="text-indent:20pt;">
+・<span style="text-decoration:underline;"><strong>メソッドのオーバーロード</strong></span>：普通に定義（引数変えて）
+<br />・<span style="text-decoration:underline;"><strong>プロパティ</strong></span>：メンバ変数をメソッドで隠蔽する
+</p><p style="text-indent:40pt;">
+class Test
+</p><p style="text-indent:60pt;">
+private int hoge;
+<br />public int Hoge {
+</p><p style="text-indent:80pt;">
+get {
+</p><p style="text-indent:100pt;">
+return this.hoge;
+</p><p style="text-indent:80pt;">
+}
+<br />set {
+</p><p style="text-indent:100pt;">
+this.hoge = value;
+</p><p style="text-indent:80pt;">
+}
+</p><p style="text-indent:60pt;">
+}
+</p><p style="text-indent:40pt;">
+}
+<br />別のオブジェクトから test.Hoge = 99; とアクセスする。(setterとgetterみたい)、これはrubyの場合
+</p><p style="text-indent:40pt;">
+class Test
+</p><p style="text-indent:60pt;">
+attr_accessor :hoge
+</p><p style="text-indent:40pt;">
+end 
+</p><p style="text-indent:40pt;">
+で test.hoge = 99 とアクセス（楽だ）
+</p><p style="text-indent:40pt;">
+
+</p><p style="text-indent:20pt;">
+・<span style="text-decoration:underline;"><strong>配列</strong></span>：普通に宣言、普通に使用
+</p><p style="text-indent:40pt;">
+・int[] myArray = new int[5];  myArray[1] = 99; 普通に
+<br />・int[] myArray = { 1, 2, 3, 4, 5 }; 割に普通
+<br />・myArray.<span style="text-decoration:underline;"><strong>Length</strong></span> でサイズ
+<br />・Copy, Reverse, Sort, 色々なメソッドは用意されている
+<br />・<span style="text-decoration:underline;"><strong>foreach</strong></span> ：要素毎に処理を繰り返す（ruby的）
+</p><p style="text-indent:60pt;">
+foreach( int x in myArray){
+</p><p style="text-indent:80pt;">
+Console.WriteLine( i.ToString() );
+</p><p style="text-indent:60pt;">
+}
+</p><p style="text-indent:40pt;">
+・<span style="text-decoration:underline;"><strong>params</strong></span> キーワードで引数を配列として受け取る
+</p><p style="text-indent:60pt;">
+public int Hoge( params int[] intArray){
+</p><p style="text-indent:80pt;">
+foreach( int x in intArray){
+</p><p style="text-indent:100pt;">
+Console.WriteLine( x.ToString() );
+</p><p style="text-indent:80pt;">
+}
+</p><p style="text-indent:60pt;">
+}
+<br />test.Hoge(1, 2, 3, 4, 5);
+</p><p style="text-indent:20pt;">
+・<span style="text-decoration:underline;"><strong>多次元配列</strong></span>：int[,,] intArray = new int[2,3,4]; intArray[0,1,0]=99; のように
+<br />・<span style="text-decoration:underline;"><strong>ジャグ配列</strong></span>：ジャグ（ギザギザ）の配列、配列の配列
+</p><p style="text-indent:40pt;">
+int[][] jaggArray = new int[3][];
+<br />jaggArray[0] = new int[5]; //1列目は5行の配列
+<br />jaggArray[1] = new int[2]; //2列目は2行
+<br />（便利なのかな〜？判りにくい気がする）
+</p><p style="text-indent:0pt;">
+最初想像していたよりは、意外に普通だと思った。
+</p>
+

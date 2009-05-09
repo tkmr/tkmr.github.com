@@ -1,0 +1,60 @@
+---
+layout: old_post
+title: CAPTCHA webサービス「reCAPTCHA」を設置してみた - gem install recaptcha
+permalink: /tatsuya/show/347-captcha-web-recaptcha-gem-install-recaptcha
+---
+<p>
+昨日「クロスドメイン通信について、調べて後で書こう」と書いときながら、その件は全力で右から左へ受け流しつつブログにCAPTCHAを付けてみました。
+</p><p>
+<img src="http://farm2.static.flickr.com/1196/542401469_bb990f588c_o.png" height="126" width="320" border="1" hspace="4" vspace="4" alt="542401469 Bb990F588C O" />
+</p><p class="clear">
+というのも、最近思い直してブログにコメント欄を付けたので、勢いで気になっていたwebサービスのreCAPTCHAを付けてみたわけです。
+<br />これ<span style="font-family:serif;">→</span><a href="http://labs.cybozu.co.jp/blog/akky/archives/2007/05/recaptcha-human-group-ocr.html">秋元@サイボウズラボ・プログラマー・ブログ: reCAPTCHA - キャプチャを利用した人力高性能OCROCR</a>
+</p><p>
+reCAPTCHAサーバとの通信とか面倒かと思ったけど、gemのライブラリを使えばラクチンポだった。一応メモ
+</p><p>
+<a href="http://www.loonsoft.com/recaptcha/" title="recaptcha - Gran Paradiso (Build 2007060517)">gem recaptcha </a><a href="http://www.loonsoft.com/recaptcha/" title="recaptcha - Gran Paradiso (Build 2007060517)">解説：</a><a href="http://www.loonsoft.com/recaptcha/" title="recaptcha - Gran Paradiso (Build 2007060517)">http://www.loonsoft.com/recaptcha/</a>
+</p><p>
+<span style="font-size:13pt;"><strong>gem recaptcha </strong></span><span style="font-size:13pt;"><strong>インストール</strong></span>
+<br />まずreCAPTCHAのサイトでアカウントを作る <a href="http://recaptcha.net/whyrecaptcha.html">http://recaptcha.net/whyrecaptcha.html</a>
+<br />email入れてパスワード入れて・・・登録完了、で完了画面にでるPUBLIC_KEYとPRIVATE_KEYをメモしとく。で次にRuby用ライブラリを普通にgemからインストールする
+</p><pre>
+gem install --source http://www.loonsoft.com/recaptcha/pkg recaptcha
+</pre><p>
+完了、次はRailsアプリケーションの/config/environment.rbへ先ほどのキーを書く
+</p><pre>
+RCC_PUB = "パブリックキー"
+RCC_PRIV= "プライベートキー"
+</pre><p>
+準備完了。
+</p><p>
+<span style="font-size:13pt;"><strong>/app/controllers/application.rb</strong></span>
+<br />以下のようにreCAPTCHAライブラリを組み込む
+</p><pre>
+gem 'recaptcha'
+class ApplicationController &lt; ActionController::Base
+  include ReCaptcha::AppHelper
+</pre><p>
+でコントローラへ validate_recap というメソッドを追加、認証が成功していればtrueを返してくれる
+</p><pre>
+comment = Comment.new(params[:comment])
+if validate_recap(params, comment.errors) then
+  #成功時処理
+else
+  #失敗時処理
+end
+</pre><p>
+<span style="font-size:13pt;"><strong>/app/helpers/application_helper.rb</strong></span>
+<br />ヘルパーも組み込む
+</p><pre>
+require 'recaptcha'
+module ApplicationHelper
+  include ReCaptcha::ViewHelper
+</pre><p>
+CAPTCHAを入れたい場所に get_captcha() というヘルパーメソッドを置いて完了。
+<br />試してみる・・・・、一応大丈夫ぽいかな？しばらくこれで試してみよう。しかしあれだね、人力OCRサービスってアイデアは面白いし邪魔なだけのCAPTCHAが有意義に活用されると考えると楽しいけど、ちょっと難しすぎ？設置した自分でも読めない。。。
+</p><p>
+後はなんだろ？トラックバックくらいやっぱ付けようかな。
+<br />あ、あとこのブログ <a href="http://ecto.kung-foo.tv/archives/000991.php">ectoのMac版</a> で書いてるんですが、リンクが半角・全角で分割されるのが気持ち悪い。それ以外は気に入ってるので手放したくないんだけど、どうにか直せないかな？フォーマットのカスタマイズとかどこからやるんだろ・・・
+</p>
+

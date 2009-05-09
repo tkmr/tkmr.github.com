@@ -1,0 +1,51 @@
+---
+layout: old_post
+title: URLにキーワードを含めことでSEO対策になるかも、でもそれだけ
+permalink: /tatsuya/show/312-url-seo
+---
+<p>最近Danさんのこのエントリーで気づいたんだけど</p>
+
+<p><a href="http://blog.livedoor.jp/dankogai/archives/50813868.html">404 Blog Not Found:http://www.amazon.co.jp/ の「二枚舌」に学ぶ究極のSEO</a> 
+<br /> <blockquote>なぜAmazonはbotに対してこのような正規化を行うのであろうか。  これぞ、SEOである。URL中に入った検索ワードというのは、非常に効果が高いのである。Wikipediaやはてなキーワードが検索で上位になる理由も、これが大きいと思われる。
+<br /></blockquote></p>
+
+<p>今まさに書いているこのブログ、最近こそ思うとこあってちょくちょく書くように心がけてるけど、昔は数週間に一回とかしか書いてなかった。んで当然Google先生の評価的にも極々低い位置にいると思ってたのに妙に <b>acts_as_taggable</b>で検索してアクセスしてくる人が多い。で試しにGoogleを確認してみると確かに<a href="http://www.google.co.jp/search?hl=ja&amp;client=firefox&amp;rls=org.mozilla%3Aja%3Aofficial&amp;hs=gtp&amp;q=acts_as_taggable&amp;btnG=Google+%E6%A4%9C%E7%B4%A2&amp;lr=lang_ja">高い位置にランクしてる</a></p>
+
+<p>これが長年疑問だった、はっきり言ってメモ書き程度のエントリーでたいしたことないし、特に他のサイトからリンク張られてるわけでも無さそう。この現象が気になって夜も眠れなかった、飯も食えなかった、嘘だけど。これって上のdan kogaiの記事からするにエントリーのURLが知らない内にSEO対策になってたのかな？</p>
+
+<p>http://blog.tkmr.org/tatsuya/show/194-rails-acts-as-taggable</p>
+
+<p>確かにacts-as-taggableという文字は一応入ってる、でこのエントリーは1月17日に書いた物だけど当初のURLは普通</p>
+
+<p>http://blog.tkmr.org/tatsuya/show/194</p>
+
+<p>何故URLが変わったかと言うと、以下のエントリーに詳細はありますが、要するにちょっとした暇つぶしでした。</p>
+
+<p>　（詳細：<a href="http://blog.tkmr.org/tatsuya/show/247-rails-37signals-url">Railsでお馴染み37signalsのURLが凄い件について:TKMR.blog.show</a>）</p>
+
+<p>このエントリーの日以降SEO効果が高くなったてこと？ まとめると</p>
+
+<p><ul><li><b>1月17日</b> : http://blog.tkmr.org/tatsuya/show/194</li><li><b>2月6日</b>&nbsp; : http://blog.tkmr.org/tatsuya/show/194-rails-acts-as-taggable
+<br /></li></ul></p>
+
+<p>よし、アクセス数の推移を見てみよう</p>
+
+<p><img src="http://farm1.static.flickr.com/187/468021757_40191814f0_o.png" />
+<br /><div align="center">/show/194 のアクセス数</div></p>
+
+<p><img src="http://farm1.static.flickr.com/201/468021759_81f97548e3_o.png" />
+<br /><div align="center">/show/194-rails-acts-as-taggable のアクセス数</div></p>
+
+<p><b>2月6日グラフ判り易すぎw！</b>ちなみにこのエントリ文章の変更は行なっていない。なので変化したのはURLに "-rails-acts-as-taggable" という文字列が追加されただけ。ちなみに参照ソース (Refear) は</p>
+
+<p><img src="http://farm1.static.flickr.com/179/468021761_17e7a381c3_o.png" />
+<br /><div align="center">/show/194</div></p>
+
+<p><img src="http://farm1.static.flickr.com/226/468021763_beeae29d74_o.png" />
+<br /><div align="center">/show/194-rails-acts-as-taggable</div></p>
+
+<p>うーむGoogle &amp; Yahoo が82.83%、確かにGoogleからのアクセス数が妙に多かったのは納得できたかも。
+</p>
+
+<p>まぁなんにしても、結局この話も<b>あるある大辞典よりサンプル数の母体が少ないww</b>ので、常識ある人は話半分くらいに聞いてると思うし、SEO対策なんて不毛なことはあまり考えないほうが良いと思う。 結局自分のためにならないし、acts_as_taggable で検索して自分のエントリーを読んで速攻戻るボタンを押すだろう人に申し訳ない。</p>
+

@@ -1,0 +1,142 @@
+---
+layout: old_post
+title: JavaScriptによるRESTライブラリ Jester ver1.3 とJSONP対応
+permalink: /tatsuya/show/344-javascript-rest-jester-ver1-3-jsonp
+---
+<p>
+あいかわらず、JavaScriptのActiveResource的なRESTライブラリ <a href="http://giantrobots.thoughtbot.com/2007/4/30/jester-1-2-flexible-rest">Jester</a> を触るのが楽しい
+</p><p>
+<a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">Jester-RESTfullな</a><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">Rails</a><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">向け</a><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">JavaScript</a><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">ライブラリ</a><a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript" title="Jester-RESTfullなRails向けJavaScriptライブラリ:TKMR.blog.show">:TKMR.blog.show</a>
+<br /><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">REST</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">な</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">Rails </a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">向けの</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">JavaScript</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">ライブラリ</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show"> Jester </a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">まとめ</a><a href="http://blog.tkmr.org/tatsuya/show/303-rest-rails-javascript-jester" title="RESTなRails向けのJavaScriptライブラリ Jester まとめ:TKMR.blog.show">:TKMR.blog.show</a>
+<br /><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">REST</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">アクセスを行う</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">JavaScript</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">ライブラリ</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show"> Jester Ver.1.2</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">の変更点</a><a href="http://blog.tkmr.org/tatsuya/show/320-rest-javascript-jester-ver-1-2" title="RESTアクセスを行うJavaScriptライブラリ Jester Ver.1.2の変更点:TKMR.blog.show">:TKMR.blog.show</a>
+</p><p>
+このJester、最近Subversionのリポジトリを見るとVer1.3が完成している（ように見える）。CHANGELOGを見るとついにJSONサポートが完了してる？早速試してみよう
+</p><p>
+<span style="font-size:13pt;"><strong>ローカルサーバと</strong></span><span style="font-size:13pt;"><strong>JSON</strong></span>
+</p><p>
+まずサーバ側を用意、クレジットカードが目に入ったのでcardとかをscaffold_resourceで作る
+</p><pre>ruby script/generate scaffold_resource card name:string number:integer
+</pre><p>
+各種アクションをJSON対応させる
+</p><pre>respond_to do |format|
+　format.html
+　format.xml  { render :xml =&gt; @cards.to_xml }
+　format.json { render :json =&gt; @cards.to_json}
+end
+</pre><p>
+サーバ側終了、rake migrateしてからwebサーバ立ち上げる。
+<br />続いてクライアント側、Prototype.jsとJester.jsを読み込ませて準備完了。FireBugで触ってみる
+</p><p class="clear">
+<a href="http://www.flickr.com/photos/28646244@N00/537739017/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1222/537739017_2b3f4f3794_o.png" width="476" height="575" alt="jester-13" /></a>
+</p>
+
+<p class="clear">
+追記：PUT &#38; DELETEはクエリーストリングで擬似的に投げる、_method=put みたいに
+</p><pre class="source">
+Base.model(<span class="str">"Card"</span>,{format: <span class="str">"json"</span>});
+
+&gt;&gt;&gt; Card.create({name: <span class="str">"Suica"</span>, number: <span class="num">123311123</span>});
+POST http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/cards.json
+  ( card[name]=Suica&#38;card[number]=<span class="num">123311123</span> )
+
+&gt;&gt;&gt; suica = Card.find(<span class="num">3</span>);
+GET http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/cards/<span class="num">3</span>.json
+
+&gt;&gt;&gt; suica.name;
+<span class="str">"Suica"</span>
+
+&gt;&gt;&gt; suica.name = <span class="str">"Pasmo"</span>;
+&gt;&gt;&gt; suica.save();
+POST http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/cards/<span class="num">3</span>.json
+  ( card[name]=Pasmo&#38;card[number]=<span class="num">123311123</span>&#38;card[id]=<span class="num">3</span>&#38;_method=put )
+
+&gt;&gt;&gt; suica.destroy();
+POST http<span class="sym">:/</span>/localhost:<span class="num">3000</span>/cards/<span class="num">3</span>.json
+  ( _method=delete )
+</pre><p class="clear">
+文句無しの動作：）RESTfulにサーバ側を作っておけばかなり快適、実質書いたコードは10行くらいだろうか？
+</p><p class="clear">
+<span style="font-size:13pt;"><strong>クロスサイトと</strong></span><span style="font-size:13pt;"><strong>JSONP</strong></span><span style="font-size:13pt;"><strong>対応</strong></span>
+</p><p class="clear">
+但しJSONといってもあくまでもAjax.Requestを投げ結果をevalするだけ、JSONPでクロスサイトリクエストは無理な様子（正式にリリースされていないので確信は無いですが）やっぱクロスサイトにできると楽しそうなので、まずはfindを実装してみた。あとついでにカスタムメソッドも
+</p><p class="clear">
+<a href="http://blog.tkmr.org/javascripts/jester-json.js">jester-json.js</a>
+</p><p class="clear">
+＜課題＞
+</p><p class="clear">
+・findのみではなく更新系も対応（やっぱBase.requestを拡張する？）
+<br />・コールバック用の一時的な関数を作るのは微妙...
+<br />　<span style="font-family:serif;">→</span>動的生成するscriptのonLoadイベントへコールバックを設定するべき？
+</p><p class="clear">
+これで試しに <a href="http://twitter.com/home">Twitter </a>/ <a href="http://wassr.jp/help/api">Wassr</a> / <a href="http://wiki.livedoor.jp/staff_reader/d/Feed%20Discover%20API">LivedoorReaderFeedAPI</a> / <a href="http://ameblo.jp/amebavisionapi/entry-10030098079.html">AmebaVision</a> 等のAPIを叩いてみた
+</p><p class="clear">
+デモ画面こちらから→：<a href="http://blog.tkmr.org/jester-13-test.html" title="Jester1.3 test - Mozilla Firefox (Build 0000000000)">http://blog.tkmr.org/jester-13-test.html</a>
+</p><p class="clear">
+以下のようにモデルを宣言して
+</p><pre> class="clear"
+//Twitter API
+Base.model("Statuse",{format:"json", prefix:"http://twitter.com"});
+
+//LDR API
+Base.model("LDRFeed",{format:"json", plural:"feed", prefix:"http://rpc.reader.livedoor.com"});
+
+//Wassr API
+Base.model("Wassr",{format:"json", plural:"api.wassr.jp", prefix:"http:/"}); //むむむ苦肉の策
+
+//AmebaVision API
+Base.model("AmebaVision",{format:"json", plural:"api/get", prefix:"http://vision.ameba.jp"});
+</pre><p class="clear">
+findを実行してみる
+</p><pre> class="clear"
+Statuse.find("friends.json",
+  {},
+  {onSuccess: function(base){
+    render(base, new Template("&lt;img src='#{profile_image_url}'/&gt;&lt;a href='#{url}'&gt;&lt;h2&gt;Name : #{name}&lt;/h2&gt;&lt;/a&gt;&lt;h4&gt;#{description}&lt;/h4&gt;"));
+}});
+
+LDRFeed.find("discover",
+  {format:"json", url:"http://www6.ocn.ne.jp/~katoyuu/"},
+  {onSuccess: function(base){
+    render(base, new Template("&lt;a href='#{link}'&gt;&lt;h2&gt;#{title}&lt;/h2&gt;&lt;/a&gt;&lt;h4&gt;subscribers_count:#{subscribers_count}&lt;/h4&gt;"));
+}});
+
+Wassr.find("public_timeline.json",
+  {},
+  {onSuccess:function(base){
+    render(base, new Template("&lt;a href='#{link}'&gt;&lt;h2&gt;#{text}&lt;/h2&gt;&lt;/a&gt;&lt;h4&gt;#{user_login_id}&lt;/h4&gt;"));
+}});
+
+AmebaVision.find("recentMovie.do",
+  {format:"jsonp"},
+  {onSuccess:function(base){
+    render(base[0].item, new Template("&lt;a href='#{link}'&gt;&lt;img src='#{imageUrlLarge}'/&gt;&lt;h2&gt;#{title}&lt;/h2&gt;&lt;/a&gt;"));
+}});
+</pre><p class="clear">
+結果が表示される筈。
+</p><p class="clear">
+結局REST度が高いTwitter以外は無理矢理感が否めないか。。。この辺りRESTfulなAPIが増えていけば面白そうだと思う、JesteのやってることはまるでO/R（Object/RESTResource）マッピングだと思うのだが、世界中のWEBサービスがをオブジェクトへマッピングして自由に汎用的に扱えればかなり面白そうだ。上のFireBugでやっているようなことを世界規模でできると楽しいと思うのだけど、どうだろうか？
+<br />例えばTwitterの発言でURLを見つけたら、関連するフィードを探してLDRに登録するには
+</p><pre> class="clear"
+statuses = Twitter::statuse.find("friend_timeline")
+statuses.each do |status|
+  if status.text.isURL? then
+  feeds = LDR::feed.find("discover", {:url =&gt; status.text})
+    feeds.each do |feed|
+      LDR::account.find(myid).update("subscribe", {:url =&gt; feed.url})
+    end
+  end
+end
+</pre><p class="clear">
+等と書きたい。そのためにSOAPなんて必要ない、シンプルなRESTで十分だと思う。
+</p><p class="clear">
+<span style="font-size:13pt;"><strong>JavaScript</strong></span><span style="font-size:13pt;"><strong>で</strong></span><span style="font-size:13pt;"><strong>MVC</strong></span>
+<br />についても書きたかったのだけど、明日に回そう。
+<br />最近リリースされたERbテンプレートライクなJavaScriptテンプレートエンジン "EJS" をViewに置いて
+</p><p class="clear">
+<a href="http://www.edwardbenson.com/projects/ejs/" title="EJS - Embedded JavaScript at Edward Benson">EJS - Embedded JavaScript at Edward Benson</a>
+<br />ModelはJester、Controllerは...jQuery辺りを組み合わせて、Railsとの連携に向いたシンプルで簡単なMVCフレームワークが作れないかな。プラグイン式に拡張可能なやつが良いな〜、とか考えてる。
+</p>
+<p>
+追記：正式にリリースされたぽい<a href="http://blog.tkmr.org/tatsuya/show/346-rest-jester-ver1-3">Jester ver1.3の変更点についてメモ</a>
+</p>
+

@@ -1,0 +1,58 @@
+---
+layout: old_post
+title: Rails環境で初期化処理を追加したい場合どこに記述するべきか？
+permalink: /tatsuya/show/261-rails
+---
+<p><a href="http://toolmantim.com/article/2006/12/27/environments_and_the_rails_initialisation_process">Environments and the Rails initialisation process</a></p>
+
+<p>Railsの環境がどんな手順で起動するか、初期化処理を組み込みたい場合どこに書くべきか、という記事があったので試してみる。<a href="http://toolmantim.com/article/2006/12/27/environments_and_the_rails_initialisation_process">この記事</a>によると主に以下の順番があると、RAILS_ENV=developmentの場合</p>
+
+<p>&nbsp;&nbsp;&nbsp; まず始め ： /public/dispatch.fcgi をfcgiが実行 -&gt;&nbsp; require File.dirname(__FILE__) + "/../config/environment"<code class="ruby"><span class="keywords"></span><span class="string"></span></code><ol><li><span class="string">/config/environment.rb が起動 -&gt; require File.join(File.dirname(__FILE__), 'boot')</span></li><li><span class="string">/config/boot.rb を実行</span></li><li><span class="string">/config/environment.rb がRails::Initializer.runブロックを実行</span></li><li><span class="string">/config/development.rb が実行される</span></li><li><span class="string">config.after_initialize イベントが実行される （/config/development.rbなんかに記述）</span></li><li><span class="string">/config/environment.rb が最後まで実行されて起動終了</span></li><li>最後 ： 各HTTPリクエスト毎に config.to_prepare イベントが実行される (/config/developmtn.rb 辺りに記述？）
+<br /></li></ol></p>
+
+<p>この7点のどこかに初期設定処理を書く事ができると、でどこに書くかは「時と場合による」だって。う～む、ここで面白いのはconfig.after_initializeとconfig.to_prepareだろうか。これはそれぞれ↓な感じ</p>
+
+<h3>・5. config.after_initialize</h3>
+<p>
+Railsの初期設定が完了してから行ないたい処理、しかもdevelopment / test / production特有の処理を記述したい場合はdevelopment.rbとかに</p>
+
+<pre>
+config.after_initialize do
+&nbsp; #好きな処理
+end
+</pre>
+
+<p>とか書けばGoodだと。逆に環境に依存しない処理なら、6. environment.rbの最後で良いのかな。</p>
+
+<h3>&nbsp;・7. config.to_prepare</h3>
+<p>
+環境設定というより、HTTPリクエスト毎に毎回実行したい処理を記述する。どんな処理だろ？アクセス数のカウントとか良いかも。例えばproduction.rbとかに</p>
+
+<pre>
+config.to_prepare do
+&nbsp; Access.countUp
+end
+</pre>
+
+<p>とか書けば良いみたい。
+<br />それぞれのポイントで p "hogehoge" とかいれて試した結果はこれ↓、development.rbとかって2回起動してて良いの？</p>
+
+<pre>
+** Starting Mongrel listening at 0.0.0.0:3000
+** Starting Rails with development environment ...
+"[envilonment.rb-start] 1"
+"[boot.rb] 2"
+"[environment.rb-Rails::Initializer.run] 3"
+"[development.rb] 4"
+"[development.rb] 4"
+"[development.rb-after_initialize] 5"
+"[environment.rb-end] 6"
+** Rails loaded.
+** Loading any Rails specific GemPlugins
+** Signals ready.&nbsp; INT =&gt; stop (no restart).
+** Mongrel available at 0.0.0.0:3000
+
+127.0.0.1 - [Sun, 11 Feb 2007 06:59:28 GMT] "GET /rsses/1 HTTP/1.1"
+"[development.rb-to_prepare] 7"
+</pre>
+

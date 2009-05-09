@@ -1,0 +1,108 @@
+---
+layout: old_post
+title: TwitterのAPIでRailsのActive Resouceを試してみる
+permalink: /tatsuya/show/318-twitter-api-rails-active-resouce
+---
+<p>
+<a href="http://www.flickr.com/photos/28646244@N00/483410358/" title="Photo Sharing"><img src="http://farm1.static.flickr.com/221/483410358_e259a16453_m.jpg" width="160" height="124" alt="P1010461" class="corner iradius15 ishadow15"/></a>
+</p><p>
+<a href="http://blog.tkmr.org/tatsuya/show/316-twitter-ruby">昨日のスクリプトを書いていて思ったけど</a>、TwitterのAPIってRESTだよね（完全にではないけど）、これってActiveResourceでアクセスすれば簡単だったの？と思った。ということでActiveResourceの勉強もかねて試してみた、結果としては慣れればかなり楽、「Postクラスは暗黙的にPostテーブルを見る」のように命名規則に従ってスマートにWebサービスへアクセスすることができる、SOAPのWSDLみたいな型定義を準備する必要ないのは良いよね。ActionWebServiceですら型定義が結構めんどくさいしね。
+<br />あとついでに昨日のスクリプトをWebサービスにしてみよう
+</p><p class="clear">
+まず新しいRailsアプリを作る（今回はTwittとかで）、そこに最新のEdgeなRailsを落としてくる
+</p><pre>rails twitt
+cd twitt/vendor/
+sudo svn co http://dev.rubyonrails.org/svn/rails/trunk rails
+</pre><p>
+これでActiveResourceを試せるはず、こんな感じらしい
+</p><pre class="source">
+   1| <span class="comment">#Hoge</span><span class="comment">リソースを定義</span>
+   2| <span class="keyword">class</span> Hoge &lt; ActiveResource::Base
+   3|   <span class="keyword">self</span>.site = <span class="str">"http://foo.com/"</span>
+   4| <span class="keyword">end</span>
+   
+   <span class="comment">#</span><span class="comment">基本形</span>
+   <span class="comment">#GET http://foo.com/hoges/1.xml</span>
+   &gt;&gt; Hoge.find(<span class="num">1</span>)
+    
+   <span class="comment">#</span><span class="comment">カスタムメソッド</span>
+   <span class="comment">#GET http://foo.com/hoges/show.xml?name=tatsuya</span>
+   &gt;&gt; Hoge.find(<span class="sym">:show</span>, <span class="sym">:name=</span>&gt;<span class="str">"tatsuya"</span>)
+</pre><p>
+あわせてTwitterのAPIを見る<a href="http://watcher.moe-nifty.com/memo/docs/twitterAPI.txt">翻訳版ありがたい</a>：)
+<br />で準備完了、まずはStatusを作ってみる。あとクラスが増えてきそうなのでTwitter::Status, Twitter::User みたいにTwitterモジュールを作ってみる
+</p><pre class="source">
+   <span class="comment">#app/model/twitter.rb</span>
+   1| <span class="keyword">module</span> Twitter
+   2|   USER = <span class="str">"</span><span class="str">ユーザ名</span><span class="str">"</span>
+   3|   PASSWORD = <span class="str">"</span><span class="str">パスワード</span><span class="str">"</span>
+   4|   SITE = <span class="str">"http://#{Twitter::USER}:#{Twitter::PASSWORD}@twitter.com/"</span>
+   5| <span class="keyword">end</span>
+
+   <span class="comment">#app/model/twitter/status.rb</span>
+   1| <span class="keyword">class</span> Twitter::Status &lt; ActiveResource::Base
+   2|   <span class="keyword">self</span>.site = Twitter::SITE
+   3| <span class="keyword">end</span>
+
+   <span class="comment">#app/model/twitter/user.rb</span>
+   1| <span class="keyword">class</span> Twitter::User &lt; ActiveResource::Base
+   2|   <span class="keyword">self</span>.site = Twitter::SITE
+   3| <span class="keyword">end</span>
+</pre><p>
+本気で簡単、動かしてみる
+</p>
+<del>
+#consoleにURL表示すると判りやすいので、ちょっと手を加えて
+#twitt/vendor/rails/activeresource/lib/active_resource/connection.rb
+  87| <span class="keyword">def</span> request(method, path, *arguments)
+  88|   p method.to_s +" "+ path.to_s <span class="comment">#Path</span><span class="comment">を表示</span>
+</del>
+<p>
+  追記：こんな面倒なことする必要なかった・・<br/>
+  <a href="http://d.hatena.ne.jp/walf443/20070509/1178668098" title="I sort my thought... - ActiveResourceを少し触ってみた" about="_blank">I sort my thought... - ActiveResourceを少し触ってみた</a><br/>
+  loggerをクラスメソッドとして渡せば良いらしい、self.logger = Logger.new($stderr)　なるへそ。
+</p>
+
+<pre class="source">
+ruby script/console
+   1| <span class="comment">#</span><span class="comment">自分の全発言</span>
+   2| &gt;&gt; Twitter::Status.get(<span class="sym">:user_timeline</span>)
+   3| <span class="str">"get /statuses/user_timeline.xml"</span>
+   4| =&gt; [{<span class="str">"user"</span>=&gt;{<span class="str">"name"</span>=&gt;<span class="str">"okui"</span>, <span class="str">"url"</span>=&gt;<span class="keyword">nil</span>, <span class="str">"id"</span>=&gt;<span class="str">"5714242"</span>, <span class="str">"description"</span>=&gt;<span class="keyword">nil</span>, <span class="str">"protected"</span>=&gt;<span class="str">"false"</span>, <span class="str">"screen_name"</span>=&gt;<span class="str">"okui2000"</span>, 
+   5| 
+   6| <span class="comment">#id</span><span class="comment">指定で取得</span>
+   7| &gt;&gt; Twitter::Status.get(<span class="sym">:show</span>, <span class="sym">:id=</span>&gt;<span class="num">48195602</span>)
+   8| <span class="str">"get /statuses/show.xml?id=48195602"</span>
+   9| =&gt; {<span class="str">"user"</span>=&gt;{<span class="str">"name"</span>=&gt;<span class="str">"okui"</span>, <span class="str">"url"</span>=&gt;<span class="keyword">nil</span>, <span class="str">"id"</span>=&gt;<span class="str">"5714242"</span>, <span class="str">"description"</span>=&gt;<span class="keyword">nil</span>, <span class="str">"protected"</span>=&gt;<span class="str">"false"</span>, <span class="str">"screen_name"</span>=&gt;<span class="str">"okui2000"</span>, 
+  10| 
+  11| <span class="comment">#friends</span><span class="comment">全員取得</span>
+  12| &gt;&gt; Twitter::Status.get(<span class="sym">:friends</span>)
+  13| <span class="str">"get /statuses/friends.xml"</span>
+  14| =&gt; [{<span class="str">"status"</span>=&gt;{<span class="str">"text"</span>=&gt;<span class="str">"</span><span class="str">たの中あと</span><span class="str">56</span><span class="str">ページ！</span><span class="str"> ."</span>, <span class="str">"id"</span>=&gt;<span class="str">"48258352"</span>, <span class="str">"created_at"</span>=&gt;<span class="str">"Thu May 03 09:15:14 +0000 2007"</span>},  <span class="str">"name</span>
+  15| 
+  16| <span class="str">#friends</span><span class="str">を</span><span class="str">id</span><span class="str">指定で</span>
+  17| <span class="str">&gt;&gt; Twitter::User.get(:show, :id=&gt;3667401)</span>
+  18| <span class="str">"</span>get <span class="regex">/users/s</span>how.xml?id=<span class="num">3667401</span><span class="str">"</span>
+  19| <span class="str">=&gt; {"</span>status<span class="str">"=&gt;{"</span>text<span class="str">"=&gt;"</span>vaya timo de concurso.... Pep, esto huele...<span class="str">", "</span>id<span class="str">"=&gt;"</span><span class="num">46432622</span><span class="str">", "</span>created_at<span class="str">"=&gt;"</span>Tue May <span class="num">01</span> <span class="num">22</span>:<span class="num">33</span>:<span class="num">45</span> +<span class="num">0000</span> <span class="num">2007</span><span class="str">"}, "</span>profile_sidebar_fill_color<span class="str">"=&gt;"</span>e0ff92<span class="str">", "</span>name<span class="str">"=&gt;"</span>show<span class="str">"....... </span>
+</pre><p>
+/users/show の結果がおかしい？・・・・・・・・・あ、"show"というnameのユーザを取ってるのか：(
+</p><pre class="source">   1| <span class="comment">#</span><span class="comment">無理矢理</span>
+   2| &gt;&gt; Twitter::User.get(<span class="str">"show/3667401"</span>)
+   3| <span class="str">"get /users/show/3667401.xml"</span>
+   4| =&gt; {<span class="str">"status"</span>=&gt;{<span class="str">"text"</span>=&gt;<span class="str">"</span><span class="str">たの中あと</span><span class="str">56</span><span class="str">ページ！</span><span class="str"> ."</span>, <span class="str">"id"</span>=&gt;<span class="str">"48258352"</span>, <span class="str">"created_at"</span>=&gt;<span class="str">"Thu May 03 09:15:14 +0000 2007"</span>}.........
+</pre><p>
+最後の /users/show/id.xml は上手くやる方法無いのかな？むむ
+</p><p>
+追記：get() で帰ってくるのはあくまでハッシュ配列だから、Statusオブジェクトのインスタンスとして得るためにはfind() を呼ぶ必要があるんだね。
+</p><pre class="source">
+&gt;&gt; status = t.find(<span class="str">"show/35776212"</span>)
+<span class="str">"get/statuses/show/35776212.xml"</span>
+=&gt; #&lt;Twitter::Status:0x24ce5c0 @prefix_options={}, @attributes={"user"=&gt;#&lt;Twitter::User:0x24cd580 @prefix_options={},.........
+<span class="comment">#Status</span><span class="comment">オブジェクトのインスタンスが返ってくる</span>
+
+&gt;&gt; status.text
+=&gt; <span class="str">"</span><span class="str">今日はロブスター食ってきた。旨い</span><span class="str"> ."</span>
+&gt;&gt; status.created_at
+=&gt; <span class="str">"Sun Apr 22 09:03:48 +0000 2007"</span>
+</pre>
+

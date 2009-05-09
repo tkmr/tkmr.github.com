@@ -1,0 +1,38 @@
+---
+layout: old_post
+title: Ruby/scrAPIで野良RSS翻訳 (1)
+permalink: /tatsuya/show/222-ruby-scrapi-rss-1
+---
+<p>
+<a href="http://blog.tkmr.org/tatsuya/show/214">この続き</a>
+scrAPIで野良RSS翻訳を作ってみる。翻訳サービスはGoogle翻訳で、多分サービス違反とかだと思うけど細かいことは気にしない。</p>
+<p>まずPOSTをnet/httpで取る</p>
+<pre>
+require 'rubygems'
+require 'scrapi'
+require 'net/http'
+require 'open-uri'
+$KCODE = 'u'
+
+hl&nbsp;&nbsp; = "ja"
+ie&nbsp;&nbsp; = "UTF8"
+text = "Cat"
+langpair= URI.escape("en|ja")
+param = "hl=#{hl}&amp;ie=#{ie}&amp;text=#{text}&amp;langpair=#{langpair}"
+
+Net::HTTP.start('translate.google.com',80){|http|
+   response = http.post('/translate_t',param)
+   p response.body
+}
+</pre>
+<p>ずらーっと翻訳結果のHTMLが表示されたっぽいのでOK。次にscrAPIで絞る、&lt;div id="result_box"&gt;猫&lt;/div&gt;みたいな感じに結果がでるっぽいのでごく単純に。</p>
+<pre>
+googleTranslateScrape = Scraper.define do
+   process "div#result_box", :resultText =&gt; :text
+   result :resultText
+end
+
+p googleTranslateScrape.scrape(response.body, :parser_options =&gt; {:char_encoding=&gt;'utf8'})
+</pre>
+<p>むーとりあえずOKですな。次はRailsとかで適当に組み込む</p>
+

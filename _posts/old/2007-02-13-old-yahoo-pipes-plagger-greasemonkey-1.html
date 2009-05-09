@@ -1,0 +1,21 @@
+---
+layout: old_post
+title: Yahoo! PipesをPlaggerとか入れた適当なサーバと通信させるGreasemonkey (1)
+permalink: /tatsuya/show/265-yahoo-pipes-plagger-greasemonkey-1
+---
+<p>を作ってみた。<br />
+<a href="http://blog.tkmr.org/tatsuya/show/256-yahoo-gui-rss-pipes-plagger">この話の続き</a><br />
+というかXMLHttpRequestをGM_xmlhttprequestに変えただけ。
+<br />多分自分みたいな初心者が作るよりも上手く作っちゃう人いっぱいいそうだけど、面白そうなのでやってみる。誰か同じような事を考える人がいれば助けにでもなれば良いかなと</p>
+
+<p><a href="http://blog.tkmr.org/javascripts/pipes2plagger.user.js">pipes2plagger.user.js</a></p>
+
+<p>通信先のURLと、レスポンスの文字列がalert()で表示されるはず。一応最初の宣言</p>
+
+<p><pre>var myServerUri = "http://pipes.yahoo.com";</pre></p>
+
+<p>を好きなURLにすれば、AJAX通信に関しては全部好きなサーバへGM_xmlhttprequestで通信が飛ぶはず、というかGM_xmlhttprequestってクロスドメインOKなんですね。Greasemonkey面白い。後はレスポンスを受けたcallbackの所、YAH**.util.Connect.handleTransactionResponseで処理やってそうな気がする、さっき適当に作っただけなのでコード汚い、というかthis.hogeとか酷いと思う。リファクタリング求む。
+</p>
+
+
+

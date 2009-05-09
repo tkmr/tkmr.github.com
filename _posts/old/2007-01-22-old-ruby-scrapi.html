@@ -1,0 +1,50 @@
+---
+layout: old_post
+title: Ruby/scrAPIを試してみる
+permalink: /tatsuya/show/214-ruby-scrapi
+---
+<p>RSS翻訳のWebサービスあって良いと思うのに、どうも無さそう？。
+</p><p>RSS ⇒ 翻訳サイト ⇒ 翻訳RSS</p><p>ということできれば良いけど、WebAPIを公開してる翻訳サービスって意外に少ない。。<a href="http://www.webservicex.net/WCF/ServiceDetails.aspx?SID=47">WebserviceX.NET :: Web Services</a>ってとこが公開してるけど、SOAPだしちょい微妙＆scrAPIを使ってみたい。ということで普通の翻訳サービスをスクレイピングして無理矢理やる。</p>まずscrAPIをインストール
+
+<pre>gem install scrAPI
+gem install tidy</pre>
+
+<p><a href="http://labnotes.org/svn/public/ruby/scrapi/cheat/scrapi.html">scrAPIのチートシート</a>があったので参考にしつつ。もしこういうHTMLを読み込むとしたら</p>
+<pre>
+&lt;div.post_show&gt;
+&nbsp; &lt;h2&gt;&lt;a href="http://hoge"&gt;タイトル～&lt;/a&gt;&lt;/h2&gt;
+&nbsp; &lt;h5&gt;2006-12-01&lt;/h5&gt;
+&nbsp; &lt;div&gt;
+&nbsp;&nbsp;&nbsp; 本文とか
+&nbsp; &lt;/div&gt;
+&lt;/div&gt;
+</pre>
+こんな感じでできる。
+
+<pre>
+require 'rubygems'
+require 'scrapi'
+require 'open-uri'
+$KCODE = 'u'
+
+postScrape = Scraper.define do
+&nbsp; process "h2 &gt; a", :title =&gt; :text, :url =&gt;"@href"
+&nbsp; process "h5", :date =&gt; :text
+&nbsp; result :title, :date, :url
+end
+bodyScrape = Scraper.define do
+&nbsp; array :posts
+&nbsp; process "div.post_show", :posts=&gt;postScrape
+&nbsp; result :posts
+end
+
+html = URI.parse('http://blog.tkmr.org/tatsuya/list/2')
+p bodyScrape.scrape(html, :parser_options =&gt; {:char_encoding=&gt;'utf8'})
+</pre>
+
+にゃるへそ～、scrAPI良いね。
+
+<p>参考サイト
+</p> <a href="http://d.hatena.ne.jp/secondlife/20060922/1158923779">川o・-・）＜2nd life - ruby のスクレイピングツールキット scrAPI</a>
+<p><a href="http://labnotes.org/svn/public/ruby/scrapi/cheat/scrapi.html">scrAPI Cheat Sheet</a> </p><p><!-- PProtector --><a href="http://moriq.tdiary.net/20061011.html">3 日坊主日記 - scrapi - ScrAPI toolkit for Ruby</a> </p>
+

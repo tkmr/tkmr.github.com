@@ -1,0 +1,34 @@
+---
+layout: old_post
+title: fooo.nameから検索して一発でLDR購読するブックマークレットとGreasemonkeyスクリプト
+permalink: /tatsuya/show/405-fooo-name-ldr-greasemonkey
+---
+<p>何か見ているページに関連するページを<a href="http://fooo.name/">fooo.name</a>から検索して、一発でlivedoor readerのフィード購読画面へ飛ばすブックマークレットを作った↓<br /></p>
+<p><a href="javascript:location.href='http://fooo.name/accounts/search/'+window.location.href+'?redirect_to_LDR=true';">関連ページをLDRで購読</a></p>
+<p>何かページを見ているときにこのブックマークレットを実行すると、そのURLの持ち主が持っている他のページをfooo.nameから検索、見つかった場合はLDRのフィード購読画面へ飛ばす。こんな感じ↓</p>
+<p><a href="http://www.flickr.com/photo_zoom.gne?id=1846447405&amp;size=o" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2223/1846447405_a5b5bc33f7.jpg" width="500" height="411" alt="tkmrLDRDescrip" /></a></p>
+<p class="clear">この場合だと http://blog.tkmr.org/ の持ち主である自分が持ってる、はてブ／del.icio.us／LDR／twitter／tumblr・・・なんかのRSSが列挙されている。見つからなかった場合はfooo.nameの情登録ページへ飛びます。もし判る情報があれば登録・追加して頂けると助かります：）<br />
+<a href="http://fooo.name/main/aboutme">ちなみに fooo.name の説明はこちら</a></p>
+<p>あと、一人当たり数十件くらい楽に表示されて煩雑になるので、そのフィードの概要を確認するためのGreasemonkeyスクリプトも書いた。</p>
+<p><a href="http://blog.tkmr.org/javascripts/feedDescriptionForLDR.user.js">feedDescriptionForLDR.user.js</a></p>
+<p>LDRのフィード購読画面で↑の画面のように、最新４件のエントリタイトルを表示する。<br />
+このGreasemonkeyスクリプトを入れておけば。</p>
+<div style="margin-left:10pt;">
+  <p>Webを眺めているときに気になる人（ページ）を見つけた<br />
+  　<span style="font-family:serif;">↓</span><br />
+  その持ち主が持っている他のページをfooo.nameから検索<br />
+  　<span style="font-family:serif;">↓</span><br />
+  LDR購読画面でエントリ概要が表示されるので、追いかけたいフィードを吟味して購読</p>
+</div>
+<p>という流れが割と手軽にできるかなと。　</p>
+<p>ーーー以下余談ーーーー</p>
+<p>例えば何か面白い記事を見かけたとして、その記事をはてなブックマークに投げて終わりじゃなくてそのブログを購読して、さらにその人の他のサイトも購読して、その人のはてブやTwitterも購読して、ってのが生まれれば良いなと思う。幸い1000件くらいは楽に追いかけられるLDRっていう道具があるんだし。はてブの "人気エントリー" を追いかけるよりは、自分が興味ある人のブックマークを追いかけた方が面白いし、またその方がはてブ全体の情報に多様性が生まれて健全だと思う。というか別にはてブに限定した話じゃなくて、Web全体として。</p>
+<p>皆が一つの人気ランキングを見てその記事をブックマークすれば、ランキング上位の物はより上位に、下位の物はより下位に行くのは当然の話で、有名な情報はより有名に、無名な情報は無名なまま、という状況が起こりそうでまずい。じゃあそれを防ぐにはどうすれば良いか、と言われると答えは判らないけど、人の繋がりがキーになるんじゃないかなと考えている。人と人の繋がりが滑らかなクラスタリングを作って、上手く分散する。また逆に分散しすぎないよう多趣味な人間がブリッジになってクラスタを繋ぐ。じゃあどうやって実現するのが良いかと言うと難しいんだよな・・・</p>
+<p>ーーーー追記ーーーーー<br /></p>
+<p>tako3.comで同じことをやる場合はこちら↓</p>
+<p><a href="http://d.hatena.ne.jp/fuba/20071104/1194147076">tako3で検索して一発でLDR登録するブックマークレット</a></p>
+<p>あと検索がどうも遅いなと思ったら、DBにインデックスを一つ貼り忘れていたので、修正しました。</p>
+<p><a href="http://fooo.name/accounts/search/http://twitter.com/otsune">http://fooo.name/accounts/search/http://twitter.com/otsune</a></p>
+<p>修正前はやたら遅かったですが、普通になったかな。</p>
+
+

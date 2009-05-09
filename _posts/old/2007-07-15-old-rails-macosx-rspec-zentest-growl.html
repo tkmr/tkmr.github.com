@@ -1,0 +1,108 @@
+---
+layout: old_post
+title: Railsのテスト環境を改めて- MacOSX / RSpec / ZenTest / Growl
+permalink: /tatsuya/show/361-rails-macosx-rspec-zentest-growl
+---
+<p>
+<a href="http://www.flickr.com/photos/28646244@N00/809061785/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1427/809061785_d2b55f2384_o.png" width="414" height="213" alt="Picture 2" /></a>
+</p><p class="clear">
+最近Macの再インストールしてから開発環境が中途半端だったので、Railsのテスト環境を改めて整備、のメモ
+</p><p>
+1) Rails開発環境は入っている
+</p><p>
+2) RSpec入れる　 % <strong>sudo gem install rspec</strong>
+</p><p>
+3) ZenTest入れる 　% <strong>sudo gem install ZenTest</strong>
+</p><p>
+3) diff-lcs入れる　% <strong>sudo gem install diff-lcs</strong>
+</p><p>
+4) 自分のRailsアプリのディレクトリへ移動　 % <strong>cd /RAILS_ROOT/</strong>
+</p><p>
+5) rspec on rails入れる　 % <strong>sudo ruby script/plugin install svn://rubyforge.org/var/svn/rspec/tags/REL_1_0_5/rspec_on_rails</strong>
+</p><p>
+6) RSpec関係ファイルのセットアップ　 % <strong>ruby script/generate rspec</strong>
+</p><p>
+7) モデルのSpecを作ってみる　% <strong>ruby script/generate rspec_model Book</strong>
+<br />　→migrateをいじって <strong>rake migrate</strong> する
+<br />　→spec/fixture/boks.yml 編集
+</p><pre>recipe:
+  id: 1
+  title: Railsレシピ
+</pre><p>
+　→spec/model/book_spec.rb 編集
+</p><pre>
+require File.dirname(__FILE__) + '/../spec_helper'
+
+describe Book do
+  fixtures :books
+  before(:each) do
+    recipe = books(:recipe)
+  end
+  it "タイトルが等しいこと" do
+    @recipe.title.should eql "Railsレシピ"
+  end
+end
+</pre><p>
+8) チェック実行　% <strong>rake spec</strong>
+<br />　→成功　% Finished in <strong>0.506011</strong> seconds
+</p><p>
+9) テスト用サーバを立ち上げっぱなしに、処理が早くなる　% <strong>ruby script/spec_server
+<br /></strong><strong>　</strong><span style="font-family:serif;">→</span>spec/spec.opts を編集して　--drb　を追加（drbでテスト用サーバへ繋ぐ）
+<br />　→rake spec
+<br />　→Finished in <strong>0.151492</strong> seconds
+</p><p>
+10) ZenTestのAutoTestで自動テスト　% <strong>autotest </strong>（ルートディレクトリで）
+<br />　→book_spec.rbを編集　→　自動でチェックが走る
+</p><p>
+11) 見づらいのでRedGreenとGrowlを有効に
+<br />　→cp /usr/local/lib/ruby/gems/1.8/gems/Zentest-*.*.*/example_dot_autotest.rb ~/.autotest
+<br />　→~/.autotest を編集
+<br />　require 'autotest/redgreen'
+<br />　require 'autotest/growl'
+<br />　の２行をコメントから外す。
+</p><p>
+12) Growlの表示をカスタム
+<br />　この辺からはおまけで。<a href="http://wincent.com/knowledge-base/Setting_up_autotest_to_use_Growl">http://wincent.com/knowledge-base/Setting_up_autotest_to_use_Growl</a>ここを参考に表示をカスタム
+</p><pre>cd ~
+wget http://blog.internautdesign.com/files/rails_fail.png
+wget http://blog.internautdesign.com/files/rails_ok.png
+mv rails_fail.png .rails_fail.png
+mv rails_ok.png .rails_ok.png
+</pre><p>
+画像拾ってきて、~/.autotestを編集
+</p><pre>
+module Autotest::Growl
+  def self.growl title, msg, img="~/.rails_ok.png", pri=0, sticky=""
+    system "growlnotify -n autotest --image #{img} -p #{pri} -m #{msg.inspect} #{title} #{sticky}"
+  end
+  
+  Autotest.add_hook :ran_command do |at|
+    results = [at.results].flatten.join("\n")
+    output = results.slice(/(\d+)\s+examples?,\s*(\d+)\s+failures?(,\s*(\d+)\s+not implemented)?/)
+    if output
+      if $~[2].to_i &gt; 0
+        growl "Test Results", "#{output}", "~/.rails_fail.png", 2
+      else
+        growl "Test Results", "#{output}", "~/.rails_ok.png"
+      end
+    end
+  end
+end
+</pre><p>
+何故か２重にポップアップが表示されてうざいので、適当にクリアーした
+</p><pre>class Autotest
+  def self.clear_hook
+    HOOKS[:red].clear
+    HOOKS[:green].clear
+    HOOKS[:all_good].clear
+  end
+end
+Autotest.clear_hook
+</pre><p>
+あとGrowlの設定でautotestを "smoke" 等のスタイルにして、"Emergency" の背景色を赤／"Normal" の背景色を緑に変更してみた
+</p><p>
+<a href="http://www.flickr.com/photos/28646244@N00/809061785/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1427/809061785_d2b55f2384_o.png" width="414" height="213" alt="Picture 2" /></a>
+</p><p>
+なんか微妙？まあこれでいいや。満足、満足：）
+</p>
+

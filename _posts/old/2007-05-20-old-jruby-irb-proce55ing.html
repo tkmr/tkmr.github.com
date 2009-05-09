@@ -1,0 +1,49 @@
+---
+layout: old_post
+title: JRuby上のirbでインタラクティブにProce55ingを動かす
+permalink: /tatsuya/show/327-jruby-irb-proce55ing
+---
+<p>
+JRubyでRubyを動かし、<a href="http://processing.org/">Proce55ing</a>のライブラリを読み込むことが可能らしい
+</p><p>
+<a href="http://d.hatena.ne.jp/dewdrop/20070513/p5r">Quietstar - Processing by Ruby #2</a>
+</p><p>
+確かにProce55ingのコアAPIはAppletクラスを継承した普通のクラス（processing.core.PApplet）だし、JRuby上ではJavaのクラスを利用することもできるという話は聞いたことあったので、可能なのかも。でも実際にやってみると違うね、面白い。特にirb上から対話的にProce55ingを利用したコードを描いてみるとヤバイ！
+<br />・軽量でパワフルなRubyで
+<br />・対話的に (irb)
+<br />・Proce55ing ライブラリが自由に使える
+<br />これだけでご飯三杯は食べれられる。もぐもぐ。
+</p><p>
+Proce55ingをデザインしたBen Fryは、Proce55ingで作成するコードを <strong>スケッチ</strong><strong> </strong>と命名したけど、2D/3Dグラフィックが気軽に書ける・ピクセル単位での処理も書ける・映像入力も簡単にできるProce55ingプログラミングを実に上手く表現してると思う。そしてこのProce55ing &#38; irb &#38; Rubyの対話的プログラミングこそまさにスケッチだと思う、またはスケッチより前のステップ（何と言うんだろ）、だれにも見られることの無い下書きの段階だ。色や動き等のパラメータを変更するのはもちろん、スケッチの世界を制御するコードを動的に変更することもできる。
+</p><p>
+以下、Mac OS X (Intel) でProce55ing &#38; JRubyを利用するメモ
+</p><p>
+1. JREを入れておく
+<br />　ちなみに自分のVerは <strong> java version "1.5.0_07"</strong>  でした。
+</p><p>
+2. JRubyを落としてきて解凍
+<br />　<a href="http://dist.codehaus.org/jruby/jruby-bin-1.0.0RC2.tar.gz">http://dist.codehaus.org/jruby/jruby-bin-1.0.0RC2.tar.gz</a>
+</p><p>
+3. 適当な場所へ移動して
+<br />　mv jruby-1.0.0RC2 /usr/local/.
+</p><p>
+4. 環境変数を設定
+<br />　export JRUBY_HOME=/usr/local/jruby-1.0.0RC2
+<br />　export PATH=$PATH:$JRUBY_HOME/bin
+<br />　export P5_HOME=/Applications/Processing\ 0124
+<br />　export CLASSPATH=$CLASSPATH:$P5_HOME/lib/core.jar
+</p><p>
+5. こちらのサイトにあるコードを適当な名前で保存 (p5r.rb)
+<br />　<a href="http://d.hatena.ne.jp/dewdrop/20070506/p5r">http://d.hatena.ne.jp/dewdrop/20070506/p5r</a>
+<br />　<a href="http://d.hatena.ne.jp/dewdrop/20070513/p5r">http://d.hatena.ne.jp/dewdrop/20070513/p5r</a>
+</p><p>
+6. irbで触ってみる
+<br />　irb(main):001:0&gt; load "p5r.rb"
+<br />　irb(main):002:0&gt; applet = Sketch.new
+</p><p>
+　irb(main):003:0&gt; run applet
+<br />　applet.background 100, 120, applet.random(100, 200)
+</p><p>
+楽しいです。あとJRubyが意外に簡単に使えてビックリした。JRubyを利用してAppletでRubyを動かすということをやってる人もいたし、JRuby面白そうだね。
+</p>
+

@@ -1,0 +1,31 @@
+---
+layout: old_post
+title: RailsConf2007 - Rails 2.0について
+permalink: /tatsuya/show/328-railsconf2007-rails-2-0
+---
+<p>
+RailsConf2007でDHHがRailsの将来について話したらしい。但し「Rails2.0で実現しようと思っている機能の95%はすでにedge Railsで実装され動作している」と言っているようで特に新しい情報は無い、でも一応メモしとく
+</p><p>
+<a href="http://blog.nicksieger.com/articles/2007/05/18/railsconf-2007-opening-keynote-david-heinemeier-hansson" title="RailsConf 2007 Opening Keynote: David Heinemeier Hansson">RailsConf 2007 Opening Keynote: David Heinemeier Hansson</a>
+</p><p>
+<a href="http://yebo-blog.blogspot.com/2007/05/railsconf-2007dhh.html" title="yebo blog: RailsConf 2007におけるDHHのキーノート">yebo blog: RailsConf 2007における</a><a href="http://yebo-blog.blogspot.com/2007/05/railsconf-2007dhh.html" title="yebo blog: RailsConf 2007におけるDHHのキーノート">DHH</a><a href="http://yebo-blog.blogspot.com/2007/05/railsconf-2007dhh.html" title="yebo blog: RailsConf 2007におけるDHHのキーノート">のキーノート</a>
+</p><ul>
+<li><strong>REST </strong><strong>対応</strong></li>
+</ul><p>
+　scaffold_resource, respond_to,　map.resource 等のサーバ側実装と ActiveResourceによるRESTクライアント実装を正式に組み込む
+<br />　Rails2.0からはActionWebServiceの代わりとしてActiveResourceが同梱される
+</p><ul>
+<li>V-Card, ATOM, RSS 等を簡単に出力</li>
+<li>デバッグの強化（<a href="http://blog.nanorails.com/articles/2006/07/14/a-better-rails-debugger-ruby-debu">ruby-debug</a>を使うみたい）</li>
+<li>jsやcssファイル送信のパフォーマンス強化 (gzip)</li>
+<li>SQLのSELECTクエリーキャッシュ（insert, update, delete されるとクリア）</li>
+<li>MIMEタイプに応じたレンダリング</li>
+</ul><p>
+　people/index.html.erb・people/index.xml.builder ・people/index.rss.erb ・people/index.atom.builder を用意すると書いてるけどなんだろ。後で調べてみよう
+</p><ul>
+<li>config/initializers ディレクトリへコードを置けば初期化処理で呼び出される。config/environmentが置き換えられる予定</li>
+<li>migrationをシンプルに（<a href="http://agilewebdevelopment.com/plugins/sexy_migrations">sexy migration </a><a href="http://agilewebdevelopment.com/plugins/sexy_migrations">プラグイン</a>を組み込むみたい）</li>
+<li>ActionControllerへHTTP認証を組み込む</li>
+<li>OpenID用のプラグイン開発中</li>
+</ul>
+

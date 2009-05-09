@@ -1,0 +1,59 @@
+---
+layout: old_post
+title: rails plugin javascript_test - script.aculo.usのunittest.jsでTDD&BDD
+permalink: /tatsuya/show/411-rails-plugin-javascript-test-script-aculo-us-unittest-js-tdd-bdd
+---
+<p>via <a href="http://drnicwilliams.com/2008/01/04/autotesting-javascript-in-rails/">Dr Nic - Autotesting Javascript in Rails</a></p>
+<p>script.aculo.usのunittest.jsを使ったRailsプラグインの <a href="http://dev.rubyonrails.com/svn/rails/plugins/javascript_test/">javascript_test</a> なかなか良さそう。generatorでテストのひな形作成、auto_testに対応してくれる。unittest.js単体もBDD的な記述、ベンチマーク、辺りが良い。</p>
+<pre class="source">
+<span class="comment">#インストール</span>
+ruby script/plugin install javascript_test
+mkdir test/javascript
+ln -s vendor/plugins/javascript_test/assets/ test/javascript/assets
+
+<span class="comment">#テスト作成</span>
+ruby script/generate javascript_test hoge
+&gt; create test/javascript/hoge_test.html
+&gt; create public/javascripts/hoge.js
+
+<span class="comment">#テスト書いて</span>
+<span class="comment"># test/javascript/hoge_test.html</span>
+testTruth: function() {with(this) {
+  assertEqual(X, <span class="str">"hoge"</span>);
+}}
+
+<span class="comment">#実際のjsコード</span>
+<span class="comment"># public/javascripts/hoge.js</span>
+X = <span class="str">"hoge"</span>;
+
+<span class="comment">#テスト実行</span>
+rake test<span class="sym">:javascripts</span>
+</pre>
+<p>手元のMacだとSafariとFireFoxが自動で立ち上がって、テスト結果が表示される筈</p>
+<p><img name="7c4f2f965a5a9d4550e6c68aaf75017d.png" height="197" width="764" src="http://gyazo.com/7c4f2f965a5a9d4550e6c68aaf75017d.png" style="" /></p>
+<p>BDD的に書きたくても大丈夫。String, Array, Number辺りの基本クラスを拡張して、shouldEqualみたいなメソッドを追加してくれる。</p>
+<pre class="source">
+Test.context(<span class="str">"BDD-style testing"</span>,{
+  <span class="str">"setup"</span>: function(){
+    console.log(<span class="str">"Now setup!!"</span>);
+    hoge = <span class="str">"Test"</span>;
+  },
+  <span class="str">"teardown"</span>: function(){
+    console.log(<span class="str">"Now teardown!!"</span>);
+  },
+  <span class="str">"should automatically add methods to strings"</span>: function(){
+    hoge.shouldEqual(<span class="str">"Test"</span>);
+    hoge.shouldNotEqual(<span class="str">"HoHoHo"</span>);
+    hoge.shouldNotBeNull();
+    hoge.shouldBeA(String);
+    hoge.shouldNotBeA(Number);
+  }
+});
+</pre>
+<p>unittest.jsについて、詳細はこちらのサイトが詳しい。</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"><a href="http://www.greenspace.info/mt/2007/02/sciptaculousuni.html">script.aculo.usのUnitTestの使い方 前編 - Yak blog</a></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"><a href="http://www.greenspace.info/mt/2007/02/22/scriptaculousun.html">script.aculo.us付属のユニットテスト(unittest.js)の使い方 後編 - Yak blog</a></p>
+
+

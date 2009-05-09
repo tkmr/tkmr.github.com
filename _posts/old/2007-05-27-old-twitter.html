@@ -1,0 +1,52 @@
+---
+layout: old_post
+title: Twitterフェラ語変換サービス「フェラッター」をつくったー
+permalink: /tatsuya/show/333-twitter
+---
+<p>
+<a href="http://oshienai.com/name/ferago.htm">フェラ語変換スクリプト</a>とTwitterのマッシュアップ！「フェラッター」を作ったー
+</p><p>
+<a href="http://twitt.tkmr.org/felatter">
+<br /></a><a href="http://twitt.tkmr.org/felatter"><img src="http://farm1.static.flickr.com/250/514948055_db169c88e3_o.png" class="corner iradius10 ishadow10"/></a><a href="http://twitt.tkmr.org/felatter">
+<br /></a>
+</p><div class="clear">
+<a href="http://twitt.tkmr.org/felatter">フェラッター</a>
+</div><p class="clear">
+入力したテキストをフェラ語へ変換してTwitterへポストします、例えば
+</p><blockquote>
+今日の昼食は、ベトナムカレーを食った。850円也。
+<br />　↓変換
+<br />今日ほ昼食は、んっ…おいひい…。フェホハフハヘーほ食っは。ジュル…。850円也。ジュル…。
+</blockquote><p>
+のように変換されます。実用性は皆無にですが、暇つぶしや何かのプレイに使えるかも（使えないかも）。
+<br />暇つぶしで軽く作ろうと思ったので
+<br />1) JavaScriptでポップアップ（もしくはIFRAME）な新しいページを開く
+<br />2) 新ページにフォームを仕組みJavaScriptで自動Submit→Twitterへ
+<br />　→ Twitter認証もブラウザの基本認証ですむので、セキュリティ的にクリーン
+<br />　→ ログインの仕組みやサーバサイドを用意しないので簡単
+<br />という仕組みで、数時間くらいでさくっと作ろうと思ってたら・・・エラーが出る・・・TwitterのAPIはReferrerをチェックしてるんだね ；(  CSRF対策か。
+</p><p>
+ローカルで動かすとちゃんと動いたので、完成してサーバに上げるまで気付かなかった。。Referrre "localhost" はＯＫとしてるの？
+<br />・更新系はPOSTしか受け付けない
+<br />・Referrerが外部サイトのリクエストは受け付けない
+<br />の2点をチェックすればほぼCSRFは防げるか･･･？GETが通れば<a href="http://www.teria.com/~koseki/memo/referrer/">JavaScript</a><a href="http://www.teria.com/~koseki/memo/referrer/">で</a><a href="http://www.teria.com/~koseki/memo/referrer/">Reffer</a><a href="http://www.teria.com/~koseki/memo/referrer/">を消す</a>方法もあるようなのでなんとかなりそうだけどPOSTとなると
+</p><p>
+　1) XMLHTTPRequest → クロスサイトなのでＸ
+<br />　2) JSONP → GETなのでＸ
+<br />　3) IFRAMEでTwitterAPIを開く → GETなのでＸ
+<br />　4) IFRAMEで開いたページにJavaScript仕込んでフォーム自動Submit → Reffereが外部サイトでＸ （これではまった）
+<br />　5) JavaScriptでRefferを消す（location.hrefやMETAタグRefresh） → GETなのでＸ（?）
+<br />　6) アカウントIDとパスワード入力してもらって、普通にサーバサイドでポスト　←（いまここ）
+<br />　7) FlashからPOSTでReffrerを偽造したリクエスト投げれる？　→試してない（Twitterにcrossdomain.xml置いてる？）
+<br />8) JavaアプレットからPOST &#38; Reffrer偽造リクエスト投げられるか？　→試してない（クロスサイトは基本無理な筈、証明書を入れればいけるというのを読んだことあるが）
+</p><p>
+う〜む、結局サーバサイドなのか・・・4案でいけると思ったのに。。
+</p><p>
+ということで、微妙に時間をくった「<a href="http://twitt.tkmr.org/felatter">フェラッター</a>」をどうぞ。
+<br />ちなみに自分のTwitterアカウントは <a href="http://twitter.com/tkmr">tkmr</a> です、こちらもAddよろしくどうぞ。
+</p><p>
+追記：
+<br />どうもIEでエラーが起きて表示できていなかったようで、修正しました。
+<br />MacのParallelsが調子悪くてIE試さなかったのはさすがにマズかったか・・・Parallels入れ直そ
+</p>
+

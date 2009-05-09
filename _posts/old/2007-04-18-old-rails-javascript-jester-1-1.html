@@ -1,0 +1,32 @@
+---
+layout: old_post
+title: Rails的JavaScriptライブラリ Jester 1.1の変更点
+permalink: /tatsuya/show/309-rails-javascript-jester-1-1
+---
+<p>米国生活もやっと落ち着いてきたので、暇な時間にJester.jsを改造して遊ぼうか、と思ってたら
+<a href="http://giantrobots.thoughtbot.com/2007/4/16/jester-1-1-asynchronous-and-more">早速Ver1.1が出てた</a> 仕事速い（・し・）</p>
+
+<p>変更点は</p>
+<ul>
+<li>非同期通信対応 AJAX!!</li>
+　⇒find()へコールバック関数を投げる。find(id, function)のように<br />
+　User.find(1, function(user){ alert(user.name); });<br />
+
+<li>find("all")で全件取得</li>
+　⇒早速来た！配列でオブジェクトが帰ってくる。<br />
+
+<li>find("first")で最初の一件を返す（ActiveRecordでおなじみ）</li>
+
+<li>attributes()がオブジェクトの全属性を返す</li>
+　⇒ore.attributes().email で ore.emailの値が帰る<br />
+
+<li>名詞の複数形をちゃんと対応</li>
+　⇒Personの複数形は、Person<b>s</b> じゃなくて People になる <br />
+</ul>
+
+<p>
+Asynchronous通信は必須だよね、確かに。
+<br />あとfind('all')が速攻きてびびった、でも欲を言えばページングが欲しいと思うんだけど・・・いらない？</p>
+
+<p>Railsバックエンドに対し、JavaScriptもこれでModelの形が見えたと思う。ViewとControllerだね残すところは。</p>
+

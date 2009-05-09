@@ -1,0 +1,88 @@
+---
+layout: old_post
+title: Google OpenSocial API - mixiに期待しつつJavaScript Gadgetを試す
+permalink: /tatsuya/show/406-google-opensocial-api-mixi-javascript-gadget
+---
+<p>sandbox.orkut.com のアカウントが使えるようになったので、GoogleのOpenSocial APIを試してみた。OpenSocial Protocolについて詳細はこちらのサイトが詳しいようです</p>
+<p><a href="http://teahut.sakura.ne.jp/b/2007-11-04-1.html">OpenSocial Protocol - たけまる</a></p>
+<p>このブログに書いてある通り、OpenSocial Protocolは</p>
+<ul>
+  <li>クライアント用のJavaScript API</li>
+
+  <li>サーバ用のOpenSocial Data API</li>
+</ul>
+<p>の２種類があって、サーバ側 OpenSocial Data APIの実装はまだ無いみたい。ということで今回試したのはJavaScriptクライアントの方。ドキュメントへ書いてある通り、Orkut上で試してみる。あとこのドキュメントを開いとく</p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"></p>
+<p style="margin: 0.0px 0.0px 0.0px 0.0px; font: 12.0px Helvetica"><a href="http://code.google.com/apis/opensocial/docs/javascript/index.html">OpenSocial API Developer's Guide</a></p>
+<h2>sandbox.orkut.comへ登録</h2>
+<p><a href="http://code.google.com/support/opensocialsignup/">http://code.google.com/support/opensocialsignup/</a> から登録、数時間でメールが届いた。普通のwww.orkut.comとデータの互換性はある、唯一アプリケーションがsandboxでしか有効にならない。</p>
+<h2>Google Gadgets Editor</h2>
+<p>便利なので Google Gadgets Editorを利用する。</p>
+<p><a href="http://code.google.com/apis/gadgets/docs/gs.html#Scratchpad">http://code.google.com/apis/gadgets/docs/gs.html#Scratchpad</a> で自分のiGoogleホームに追加しておくと便利かも。自分のサーバがあれば、そこにXMLを置くだけでもOK。</p>
+<p><a href="http://www.flickr.com/photos/tkmr2000/1856272461/" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2002/1856272461_7a5f60c71f.jpg" width="500" height="147" alt="Google Gadgets Editor" /></a></p>
+<p class="clear">デフォルトのHello worldアプリで試してみた、右のhello.xmlのリンクURLをコピー。<a href="http://sandbox.orkut.com/MyApps.aspx">http://sandbox.orkut.com/MyApps.aspx</a> を開いて「Add an application by URL：」へ張り付けて「add application」を実行。プロフィールを表示して「Hello, world!」が表示されればOK</p>
+<h2>OpenSocialAPIを叩く</h2>
+<p>まず試しということで「OpenSocial APIから自分（Owner）の情報を取ってプロフィールURLを見つける、そのURLをfooo.nameから検索して結果を画面に表示」をやってみた。</p>
+<pre class="source">
+<span class="comment">//自分の情報を取得</span>
+var req = opensocial.newDataRequest();
+req.add(req.newFetchPersonRequest(<span class="str">'OWNER'</span>), <span class="str">'owner'</span>);
+req.send(onLoadFriends);
+</pre>
+<p>複数件の情報取得を一度のリクエストでまとめて取ることを想定しているらしい。他にも色々とある <a href="http://code.google.com/apis/opensocial/docs/javascript/reference/opensocial.DataRequest.html">http://code.google.com/apis/opensocial/docs/javascript/reference/opensocial.DataRequest.html</a></p>
+<p>で、結果をコールバック関数のonLoadFriendsで処理する。ちなみにOwnerなのにonLoadFriendsという名前なのは<a href="http://code.google.com/apis/opensocial/docs/javascript/index.html#ListFriends_Intro">サンプルコード</a>をコピッてるから：）</p>
+<pre class="source">
+var owner = dataResponse.get(<span class="str">'owner'</span>).getData();
+var url = owner.getField(opensocial.Person.Field.PROFILE_URL);
+</pre>
+<p>指定したキー（owner）でPersonオブジェクトを取得、<a href="http://code.google.com/apis/opensocial/docs/javascript/reference/opensocial.Person.html">この仕様に従って</a>情報を抜き出す、今回はプロファイルURLを取った。あとはいつも通りJavaScriptで書けばOK</p>
+<p><a href="http://www.flickr.com/photos/tkmr2000/1856559183/" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2130/1856559183_ff1ef340de_o.png" width="703" height="318" alt="Open social gadget test" /></a></p>
+<p class="clear">OrkutのプロファイルURLからfooo.nameで検索、結果を表示。自分の持ってる他のページ一覧が表示されている。本当は「フレンドの〜」てのがSNSぽくて面白いと思ったけど、Orkutのフレンドがいないのでできなかった：(</p>
+<p>やってみて特別難しいことは無い、このパーツも結局IFrameで動くので普段通りJavaScriptで作ればOK、Google Gadgets作った経験のある人はさらに楽なのかも。作ったパーツがMySpace／mixi／VOX?／Friendster なんかで汎用的に動くのは良い。ただ今現在だと「OrkutでGoogle gadgetsが動く」という状況と変わらないのであんまり面白くないな、まずはmixiの対応に期待かも。<br /></p>
+<p>最初 GoogleがMySpaceがFacebookが、という話を聞いてる時点では割とどうでも良かったけど、mixiが参加するなら日本としても面白くなりそう。</p>
+<p>適当だけど一応書いたコードこれ ↓ 途中PROFILE_URLが相対パスで「死ね」と思った、しかもパーツが動くドメインは変なドメインなので 「<a href="http://d.hatena.ne.jp/brazil/20070103/1167788352">相対パスを絶対パスに変換する</a>」この手も使えなかった。http://www.orkut.comベタ書き、駄目だなー</p>
+<pre class="source">
+&lt;<span class="num">?x</span>ml version=<span class="str">"1.0"</span> encoding=<span class="str">"UTF-8"</span> <span class="num">?&gt;</span>
+&lt;Module&gt;
+ &lt;ModulePrefs title=<span class="str">"Open Social Test"</span>&gt;
+   &lt;Require feature=<span class="str">"opensocial-0.5"</span>/&gt;
+ &lt;<span class="regex">/ModulePrefs&gt;</span>
+<span class="regex"> &lt;Content type="html"&gt;</span>
+<span class="regex"> &lt;![CDATA[</span>
+<span class="regex"> &lt;script type="text/</span>javascript<span class="str">"&gt;</span>
+<span class="str">  function getData() {</span>
+<span class="str">    var req = opensocial.newDataRequest();</span>
+<span class="str">    req.add(req.newFetchPersonRequest('OWNER'), 'owner');</span>
+<span class="str">    req.send(onLoadFriends);</span>
+<span class="str">  }</span>
+<span class="str">  function onLoadFriends(dataResponse) {</span>
+<span class="str">    var owner = dataResponse.get('owner').getData();</span>
+<span class="str">    var url = owner.getField(opensocial.Person.Field.PROFILE_URL);</span>
+<span class="str">    url = absolutePath(url);</span>
+<span class="str">    insertScript("</span>http<span class="sym">:/</span>/fooo.name<span class="regex">/tako3/</span>json/likely/<span class="str">"+url);</span>
+<span class="str">  }</span>
+<span class="str">  function tako3(res){</span>
+<span class="str">    var output = "</span><span class="str">";</span>
+<span class="str">    for(var i=0; i &lt; res.length; i++){</span>
+<span class="str">      output += "</span>&lt;li&gt;<span class="str">"+res[i]+"</span>&lt;<span class="regex">/li&gt;";</span>
+<span class="regex">    }</span>
+<span class="regex">    document.getElementById("foooList").innerHTML += "&lt;ul&gt;"+output+"&lt;/u</span>l&gt;<span class="str">";</span>
+<span class="str">  }</span>
+<span class="str">  function insertScript(url){</span>
+<span class="str">    var script = document.createElement('script');</span>
+<span class="str">    script.type = 'text/javascript';</span>
+<span class="str">    script.src = url;</span>
+<span class="str">    document.body.appendChild(script);</span>
+<span class="str">  }</span>
+<span class="str">  function absolutePath(path){</span>
+<span class="str">    return "</span>http<span class="sym">:/</span>/www.orkut.com<span class="str">"+path;</span>
+<span class="str">  }</span>
+<span class="str">  _IG_RegisterOnloadHandler(getData);</span>
+<span class="str">  &lt;/script&gt;</span>
+<span class="str">  &lt;div id="</span>foooList<span class="str">"&gt; &lt;/div&gt;</span>
+<span class="str">  ]]&gt;</span>
+<span class="str">  &lt;/Content&gt;</span>
+<span class="str">&lt;/Module&gt;</span>
+</pre>
+
+

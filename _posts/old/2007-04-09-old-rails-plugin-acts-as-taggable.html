@@ -1,0 +1,41 @@
+---
+layout: old_post
+title: Rails Pluginのacts_as_taggableが機能追加されてる
+permalink: /tatsuya/show/306-rails-plugin-acts-as-taggable
+---
+<p>
+acts_as_taggable を利用してこのブログにタグ機能を付けてる（del.icio.usからのだけ）、ふと order by create_date desc を設定したいと思いついた。でも現状のVer.じゃあできないじゃん、しょぼーん；）と思って最新版を調べたらどうも色々と機能追加されてるみたい。
+</p><p>
+<a href="http://wiki.rubyonrails.org/rails/pages/ActsAsTaggablePluginHowto">ActsAsTaggablePluginHowto in Ruby on Rails</a>
+</p><p>
+「acts_as_taggableの開発が進まないから有志で開発した改良版だ」というようなことが書いてある気もするけど違うかも。既存のVer.を使用してたのでアップデートした（<a href="http://blog.tkmr.org/tatsuya/show/194-rails-acts-as-taggable">既存Ver</a><a href="http://blog.tkmr.org/tatsuya/show/194-rails-acts-as-taggable">のインストール</a>）
+</p><pre>
+rm -rf vender/plugin/acts_as_taggable
+ruby script/plugin install http://svn.viney.net.nz/things/rails/plugins/acts_as_taggable_on_steroids/
+</pre><p>
+アップデート完了、order byを付ける修正
+</p><pre>
+//Old
+@posts = Post.find_tagged_with(params['tag'])
+//New
+@posts = Post.find_tagged_with(params['tag'],{:order=&gt;"create_date desc"})
+</pre><p>
+うむうむ、動作確認ＯＫ。:orderの他に :conditions なんかもＯＫみたい。詳細は上のリンク先を読むとして、ざっくり新機能としては以下
+</p><p>
+<strong>find_tagged_with </strong><strong>メソッドが各種オプション対応</strong>
+<br />order、conditions、limitに対応？色々凝ったことができる
+</p><pre>&gt;&gt; Post.find_tagged_with("web",{:order=&gt;"create_date desc", :limit=&gt;3})
+=&gt; [#&lt;Delpost:0x268307c @attributes={"body"=&gt;"&lt;div&gt;&lt;div&gt;&lt;a href=.........
+</pre><p>
+<strong>tags_count </strong><strong>メソッドを追加、タグ名毎に集計してくれる。</strong>
+<br />orderやconditions指定も可能。countプロパティに集計数が入る
+</p><pre>
+&gt;&gt; Post.tag_counts(:order=&gt;"create_date desc")
+=&gt; [#&lt;Tag:0x26680c4 @attributes={"name"=&gt;"Spotlight", "id"=&gt;"90", "count"=&gt;"12"}&gt;,#&lt;Tag:........
+</pre><p>
+<strong>Tag.delimiter</strong><strong>を</strong><strong>environment.rb</strong><strong>で設定することで区切り文字を変更</strong>
+<br />Tag.delimiter = "," でカンマ区切りとか
+</p><p>
+tags_countメソッドでカウント数が取れるようになったのは嬉しい、これまでfind_by_sqlでごりごりSQLを書いていたけど凄いコードが綺麗になった。タグクラウドにするしか無いよね、ということでタグリストをタグクラウド風にしてやった、満足、満足。
+</p>
+

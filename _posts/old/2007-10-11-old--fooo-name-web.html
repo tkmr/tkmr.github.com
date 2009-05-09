@@ -1,0 +1,154 @@
+---
+layout: old_post
+title: ソーシャルグラフ共有サイトと言うかなんと言うか、Fooo.name!!というWebサービスを作った
+permalink: /tatsuya/show/399-fooo-name-web
+---
+<p>
+（最後、少し追記しました）
+</p>
+<p>
+最近、本業も暇になってきた &amp; 連休続きだったので、ひとつWebサービスを作ってみました。
+</p><p>
+<a href="http://fooo.name/">
+
+</a><a href="http://fooo.name/"><img src="http://farm3.static.flickr.com/2132/1534628202_74fdd5fb72.jpg" alt="Picture 2" height="177" width="500" /></a>
+
+<a href="http://fooo.name/">http://fooo.name/</a>
+</p>
+
+<p class="clear">
+<span style="font-size: 14pt;"><strong>で、どんな物なのか</strong></span>
+</p><p>
+と言うと、Web上で誰か気になる人を見つけたときに「その人が、他にどんなページを持ってるか？」という情報を探すことができます（運が良ければ）
+</p><p>
+具体的には、このブックマークレット 「<a href="javascript:(function(){location.href='http://fooo.name/accounts/search/'+window.location.href})();">Fooo.nameから探す</a>」を使ってもらうのが判り易いと思います
+
+何か適当なWebサイト上でこのブックマークレットを実行すると、そのサイトに関連するURLを探し表示します。
+</p>
+
+
+
+
+<p>
+<strong>見つかった場合</strong> : http://twitter.com/tkmrを検索
+
+<a href="http://fooo.name/accounts/search/http://twitter.com/tkmr" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2215/1534723192_32837a3b85_o.png" alt="Picture 3" height="438" width="854" /></a>
+</p><p>
+無事関連するURLが見つかった場合は、他のページを見て回るもよし。LivedoorReaderで「まとめて購読」するリンクを設けているので、男らしく全部まとめて購読するのも良いと思います。
+</p>
+
+
+
+
+<p>
+<strong>残念、見つからなかった場合</strong>：http://twitter.com/hogeを検索
+
+<a href="http://fooo.name/accounts/search/http://twitter.com/hoge" title="Photo Sharing"><img src="http://farm3.static.flickr.com/2199/1534723474_9b98aae8de_o.png" alt="Picture 4" height="373" width="838" /></a>
+</p><p>
+見つからなかった場合は、ぜひ本サイトへ情報を登録してやってください；）ついでにその人が使っているアカウント名等を合わせて登録して貰えると大感激です。
+
+「大抵の人は複数のWebサービスで同じアカウント名を使う」「大抵のWebサービスはユーザ固有ページURLにアカウント名を使う」というゆる0い方針のもと。アカウント名が追加されると、自動で情報収集を試みます。
+</p><p>
+もちろんhogeさんの個人ブログは自動で登録されない or 別人のhogeさんが持っているページが登録される、等の問題もありますが、現状サイト内の情報はほぼすべて自由に編集できるので、wiki的に編集して補正して貰えると大感激です。
+
+</p>
+
+
+
+
+<p>
+<span style="font-size: 14pt;"><strong>認証について</strong></span><br/>
+
+ですが一応OpenIDによるログイン認証を設けています。本来は「livedoor関連サービスはlivedoor OpenIDでログインした場合のみ編集可能」等とするのが正しいと思います、ですが現状あまりOpenIDが普及していない &amp; できるだけ編集のハードルを上げたくない。ということで未ログインでもほぼ編集可能です。例外として http://twitter.com/[name] というサイト情報パターンの編集だけは認証を掛けています、少し影響が大きいので。
+
+</p>
+
+
+
+
+<div>
+<span style="font-size: 14pt;"><strong>APIについて</strong></span><br/>
+
+とりあえず現状 HTML / XML / JSONP / RSS  &amp; Atom の形式で情報を取得できます。下記のように好きなページへ拡張子を付けることで、その拡張子に従った形式のデータを返します。
+
+</div><div>
+例：アカウント一覧 HTML - <a href="http://fooo.name/accounts">http://fooo.name/accouts</a><br/>
+
+　　XML  - <a href="http://fooo.name/accounts.xml">http://fooo.name/accouts.<strong>xml</strong></a><br/>
+
+　　JSONP - <a href="http://fooo.name/accounts.json?callback=jsonCallback">http://fooo.name/accouts.<strong>json</strong>?callback=hogeCallback</a><br/>
+
+　　RSS  - <a href="http://fooo.name/accounts.rss">http://fooo.name/accouts.<strong>rss</strong></a><br/>
+
+　　Atom  - <a href="http://fooo.name/accounts.atom">http://fooo.name/accouts.<strong>atom</strong></a><br/>
+</div><p>
+例：アカウント "tkmr" の情報 HTML - <a href="http://fooo.name/accounts/tkmr">http://fooo.name/accounts/tkmr</a><br/>
+
+　　XML - <a href="http://fooo.name/accounts/tkmr.xml">http://fooo.name/accounts/tkmr.<strong>xml</strong></a><br/>
+</p><p>
+例：http://twitter.com/tkmr で検索 HTML - <a href="http://fooo.name/accounts/search/http://twitter.com/tkmr">http://fooo.name/accounts/search/http://twitter.com/tkmr</a><br/>
+
+
+　　JSONP - <a href="http://fooo.name/accounts/search/http://twitter.com/tkmr?format=json&amp;callback=hogeCallback">http://fooo.name/accounts/search/http://twitter.com/tkmr? format=<strong>json</strong>&amp;callback=hogeCallback</a><br/>
+</p><p>
+JavaScriptならJSONPでお手軽に。RailsならActiveResourceでフルアクセス。詳細は下記のAPIページをどうぞご覧ください。
+
+<a href="http://fooo.name/main/aboutapi">http://fooo.name/main/aboutapi</a>
+</p>
+
+
+
+
+<p>
+<span style="font-size: 14pt;"><strong>何が目的？</strong></span><span style="font-size: 14pt;"><strong> &amp;  </strong></span><span style="font-size: 14pt;"><strong>何故作ったか</strong></span>
+</p><p>
+についてですが、単純に言うと「人と人の関係がAPIで取得できたら面白いんじゃないか」という思いがあります。「mixiの友達が3人以上購読したRSSは自動で購読」「Twitterのフレンドが一定数以上引用したURLを開く。一定数以上含まれたHotなキーワードをBlog検索して結果のRSSを購読・・・・」などなど、それがWebサービスを横断して色々できると面白いかなと常々思っていました。これは最近話題のソーシャルグラフというキーワードが上手く表現していると思います。（下記のページが判り易いと思います）
+</p><p>
+<a href="http://d.hatena.ne.jp/antipop/20070819/1187527599">[翻訳] ソーシャルグラフについて</a>
+</p><p>
+また少し話は逸れますが、下記のページにある SNS型RSSリーダー というアイデアを見つけたのもきっかけの一つです
+</p>
+
+<p>
+<a href="http://ised-glocom.g.hatena.ne.jp/ised/13020114">なめらかなメッセージング- ised議事録 - 2.設計研第7回：鈴木健</a>
+</p>
+
+<p>
+上の記事によると、インターネットの登場には「マスメディアによるメディアの独占を崩壊させ、多様な個人が世界中の人々とコミュニケーションする」という夢があったが、現状達成されていないし、良い方向に向かっているとも思えない。なぜなら人間の認知力には限界があるので情報を上手くフィルタリングしないと下記の問題が発生する
+</p><p>
+<strong>1) マスメディア化</strong>
+
+　 結局、普通の人が見るのは有名なページ or サイト。そのためインターネットが既存のマスメディアを破壊しても、第2, 3のマスメディア（Yahoo , Google , 一握りの有名サイトと無数の無名サイト）が発生する
+</p><p>
+<strong>2) たこつぼ化</strong>
+
+　 自分の興味のある閉じられたコミュニティの情報にしか耳を傾けなくなる。（本屋に行くとき「本を買う」というのはもちろん、何か新しい分野の情報に出会う、ために本屋をぶらつくということがあるかと思います。逆に検索エンジン中心のWebは興味の無い情報に出会う確率が低い、そこで上手い配分で偶然性を入れる はてブやTumblrが流行っている？）
+</p><p>
+<strong>3) SPAM化</strong>
+
+　 無理矢理外部から「たこつぼ」の中に情報をプッシュすると、本来有益な情報もSPAMになる。（livedoor Reader なんかはもっと多くの人に使ってほしい、と個人的に思っているけど、それを現状必要としていない人に伝えるのは至難の技だと思う。必要としてない情報は（実は有益でも）邪魔なSPAMになってしまう）
+</p><p>
+これらの問題を解消するために、人と人の繋がりを利用した「SNS型RSSリーダー」はどうか？というアイデアが面白いと思う。
+</p><p>
+ざっくり言うと「友達の読んでいるRSSが流れてくるRSSリーダ」のようです。詳細は上記ページを見て頂くとして、既に繋がりのある友達からの情報なら興味を持ち易いし「高校の友達フィード」から全然違う分野の情報が流れ込んでくれば、別分野に興味を持つ確率も高まる（SPAM化、たこつぼ化の解消）マスメディア化に関しては決定的な解消と行かないかもしれませんが、中心の無いネットワークが結びつくので比較的マスメディア化も分散するのではないか、という<a href="http://www.glocom.jp/ised/img/D7/suzukiken06_large.jpg">考察がされています。</a>
+</p><p>
+アイデア自体は面白いと思うのですが、ここは 「ソーシャル情報によるRSSアグリゲート / UIとしてのRSSリーダ」と実装を分離することができると思います、そしてUIに関しては既存のRSSリーダを利用し、ソーリャル情報によるRSSアグリゲート機能も「ソーシャル情報のDB / RSSアグリゲータ」と分離するべきで、とりあえず「ソーシャル情報のDB」を実装してみよう、と思い試みた結果できたのが本サイトになります。
+</p><p>
+<span style="font-size: 14pt;"><strong>次の段階</strong></span>
+</p><p>
+ということで次の段階としては、人と人の繋がりの情報を収集する仕組みを実装しようと思います。
+
+例えば「<a href="http://d.hatena.ne.jp/antipop/20070819/1187527599">[翻訳] ソーシャルグラフについて</a>」のページで言う "エッジ" の実装になるのかな、と考えています。
+</p>
+
+<p>
+<h2>追記</h2>
+少し追記を。<br/>
+今回作成したFooo.nameと同じコンセプトのWebサービスに <a href="http://tako3.com/">http://tako3.com/</a> というサービスがあります。<br/>
+同じコンセプトのサービスがあるなら、車輪の再発明をする必要ないじゃん。とも思いましたが、tako3.comでは「量より質」の方針で集めているようで
+、個人的に「質より量」で実装してみたかったのでやってみた次第です。<br/>
+（というか、昨日<a href="http://www.horaguchi.net/">作者の方のブログ</a>へコメント出しておきながら、言及を忘れてました。。申し訳ないです）<br/>
+
+ということで <a href="http://tako3.com/">tako3.com</a> も合わせてどうぞ ：-）
+</p>
+

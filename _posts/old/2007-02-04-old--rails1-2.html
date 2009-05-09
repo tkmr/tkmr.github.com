@@ -1,0 +1,127 @@
+---
+layout: old_post
+title: 今更ながらRails1.2の変更点とか翻訳してみた
+permalink: /tatsuya/show/239-rails1-2
+---
+<a href="/picture/show/133.png"><img alt="133" src="/picture/show/133.png?1170574828"></a>
+<p>Rails1.2も出たことだし、変更点とかちゃんと読んどこうと思ってざっくり訳してみた。やっぱ
+<br />り:format&respond_toとscaffold_resourcesでRESTFull化が目玉っぽい、あとマルチバイト対応が日本人的には嬉しいかも。</p>
+
+<p>原文：<a href="http://weblog.rubyonrails.com/2007/1/19/rails-1-2-rest-admiration-http-lovefest-and-utf-8-celebrations">
+Riding Rails: Rails 1.2: REST admiration, HTTP lovefest, and UTF-8 celebrations</a></p>
+
+<p><h3>REST and Resources</h3></p>
+
+<p>RESTはRails1.2の目玉です、RESTに関しては私(DHH)の<a href="http://honyaku.yahoofs.jp/url_result?ctw_=sS,eCR-EJ,bT,uaHR0cDovL2Jsb2cuc2NyaWJlc3R1ZGlvLmNvbS9hcnRpY2xlcy8yMDA2LzA3LzA5L2RhdmlkLWhlaW5lbWVpZXItaGFuc3Nvbi1yYWlsc2NvbmYtMjAwNi1rZXlub3RlLWFkZHJlc3M=,qlang=ja%7Cfor=0%7Csp=-5%7Cfs=100%%7Cfb=0%7Cfi=0%7Cfc=FF0000%7Cdb=T%7Ceid=CR-EJ,k,t">RailsConfキーノート</a>を見てください。REST化はRailsのために重要な物です。あなたのアプリケーションをよりRESTfullにするための方法を考え始めてください。</p>
+
+<p>REST化への移行を手伝うために、私達はCRUDなインターフェイスを作るためのscaffold generatorを提供します。</p>
+<pre>script/generate scaffold_resource</pre>
+<p>を試してみてください。</p>
+<p>（追記：<a href="http://blog.tkmr.org/tatsuya/show/242">試してみた</a>）</p>
+
+<p><h3>フォーマットとrespond_to</h3></p>
+
+<p>Rails1.1時代からあるrespond_toに私達は少し手を加えました、それは魔法の:format! 全ての新しいアプリケーションはさらに一つデフォルトルートが加えられるでしょう。</p>
+
+<pre>map.connect ':controller/:action/:id.:format'</pre>
+
+<p>このルートを元に、以下の例を想像してみてください。</p>
+
+<pre>
+class WeblogController < ActionController::Base
+  def index
+    @posts = Post.find :all
+    respond_to do |format|
+      format.html
+      format.xml { render :xml => @posts.to_xml }
+      format.rss { render :action => "feed.rxml" }
+    end
+  end
+end
+
+GET /weblog     # returns HTML from browser Accept header
+GET /weblog.xml # returns the XML
+GET /weblog.rss # returns the RSS
+</pre>
+
+<p>この動作を実現するのに、今後Acceptヘッダーを使う必要はありません！:formatはより簡単に実現します。あなたはブラウザに".xml"を付けるだけで、あなたのAPIを探検することができます。ちょっと".rss"を付けてみてください、自動でページとアクションのキャッシングを行います（訳：本当？）</p>
+
+<p>もちろんこの:formatはscaffold_resourceと抜群の相性で、自動でこれらをやってのけます。resource-scaffold generatorを行なうと自動で /posts/5.xml というアクセスまで作り上げるでしょう。素晴らしい！</p>
+
+<p><h3>Multibyte</h3></p>
+
+<p>オーイ!Unicodeちゃん! Railsがunicodeを保存->表示する間、UTF-8の文字列に対しtruncate,reverse,length等を行なうのはちょっと面倒でした。あなた自身でKCODEを記述していましたが、それは簡単ではありませんでした。</p>
+
+<p>Unicode文字列の動作ためにRails1.2はActiveSupport::Multibyteを導入します。文字列でcharsメソッドを呼ぶとbyte単位ではなく良い感じに動き始めます。</p>
+
+<p>'€2.99'という文字列を想像してください、私達がbyte単位で操作することは叶わぬ夢です。</p>
+
+<pre>
+'€2.99'[0,1] # => "\342" 
+'€2.99'[0,2] # => "?" 
+'€2.99'[0,3] # => "EUR"
+</pre>
+
+<p>このようにEUR文字列は3バイトです。あなたがバイト単位で操作するのは簡単ではないでしょう、しかしString#firstとTextHelper#truncateは簡単にそれを行なうことができる！</p>
+
+<pre>
+'€2.99'.first        # => '€'
+truncate('€2.99', 2) # => '€2'
+</pre>
+
+<p>String#firstとTextHelper#truncateは自動で.charsメソッドを呼びます。もしあなた自身が操作したい時やlengthを使用したい時などは.charsメソッドを自分で呼んで下さい。例えば以下のように</p>
+
+<pre>You've written <%= @post.body.chars.length %> characters.</pre>
+
+<p>Rails1.2はあなたがunicodeを使いたいと想定しています、よってデフォルトchasetはUTF-8です、KCODEも自動的にUTF-8へセットされます。
+<br />（違うchasetをセットすることも可能です、例えば ActionController::Base.default_charset=(encoding) のように) </p>
+
+<p>とても感謝します Manfred Stienstra, Julian Tarkhanov, Thijs van der Vossen, Jan Behrens, and (others?) </p>
+
+<p><h3>Routes</h3></p>
+
+<p>ActionPackの新しい実装はRoutesをより安全で高速にします、しかしそれは少し厳しくもあります。セミコロンとカンマはセパレーターです、例えば</p>
+
+<pre>map.connect '/download/:file'</pre>
+
+<p>という記述は、/download/history.txtにはもうマッチしません（動きません）。以下のような記述を使用してください</p>
+
+<pre>map.connect '/download/:file',
+            :requirements => { :file => /.*/ }</pre> 
+<p>（訳：あってる？微妙）</p>
+
+<p><h3>Auto-loading</h3></p>
+
+<p>Rubyの標準ライブラリへの参照にあったバグをフィックスしました。私達は自動でpathname.rbを読み込みます、これ以上require 'pathname'と手動で記述を行なう必要ありません。</p>
+
+<p>また私達はモジュールの扱いも改善しました、例えばAccounting::Subscriptionという参照は、app/models/accounting/subscription.rb を参照することになります。しかしもしapp/models/subscription.rbというパスで参照したい場合、config/environment.rbのconfig.load_pathsへ</p>
+
+<pre>app/models/accounting</pre>
+
+<p>という記述を追加してください。</p>
+
+<p><h3>Prototype.js</h3></p>
+
+<p>To better comply with the HTML spec, Prototype’s Ajax-based forms no longer serialize disabled form elements. Update your code if you rely on disabled field submission.（よく判らん、Ajaxのときhiddenフィールドを送信しなくなったので、コードを修正しろ。ってこと？）</p>
+
+<p>一貫性のために、Prototype.jsのElement・Fieldメソッドは引数を受け取らなくなりました。もしElement.toggleやElement.show等を使用していた場合、あなたはコード修正を行なう必要があります。</p>
+<p>もしあなたがこのようなコードを書いていたとすれば</p>
+<pre>
+Element.show('page', 'sidebar', 'content');
+</pre>
+<p>このように修正する必要があります</p>
+<pre>
+['page', 'sidebar', 'content'].each(Element.show);
+</pre>
+
+<p><h3>Action Mailer</h3></p>
+
+<p>全てのemailはMIMEバージョン1.0がデフォルトになりました。あなたはメール用のユニットテストを書き直す必要があります。</p>
+
+<pre>@expected.mime_version = '1.0'</pre>
+
+<p><h3>Deprecation</h3></p>
+
+<p>Rails1.0からの互換性がうんぬん、何か言いたい事あったら遠慮せずに言ってこい、とか書いてあるっぽい。
+</p>
+

@@ -1,0 +1,43 @@
+---
+layout: old_post
+title: XML-RPC/weblogUpdates.pingを実装してみる
+permalink: /tatsuya/show/200-xml-rpc-weblogupdates-ping
+---
+<p>
+更新pingでも実装しよう！と思って調べた
+<a href="">Weblogs.com</a>の仕様が正式？ぽい。テストとして<a href="http://bulkfeeds.net/">bulkfeeds</a>へ適当に打ってみる
+</p>
+
+<pre>
+require 'net/HTTP'
+
+blogTitle="TKMR.Blog"
+blogUrl="http://blog.tkmr.org/tatsuya/list"
+
+request = &lt;&lt;EOF
+&lt;?xml version="1.0"?&gt;
+&lt;methodCall&gt;
+&lt;methodName&gt;weblogUpdates.ping&lt;/methodName&gt;
+&lt;params&gt;
+&lt;param&gt;&lt;value&gt;#{blogTitle}&lt;/value&gt;&lt;/param&gt;
+&lt;param&gt;&lt;value&gt;#{blogUrl}&lt;/value&gt;&lt;/param&gt;
+&lt;/params&gt;
+&lt;/methodCall&gt;
+EOF
+
+Net::HTTP.start('bulkfeeds.net', 80){|http|
+ response = http.post('/rpc', request, {"Content-Type" => "text/xml"})
+ puts response.body
+}
+</pre>
+<p>
+ＯＫぽい、rexmlとか使おうかと思ったけどメンドクサイので文字列#{変数} で行く。さあこれをRailsのコードに組み込むだけだ...ごにょごにょと。
+</p>
+<p>
+送り先はどうしよう、配列とかで複数持たせるか...と思ってたら<a href="http://pingoo.jp/">pingoo</a>っていうサイトが国内のメジャーな検索エンジン&Blog検索サービスに一括して送信してくれるみたい、よしありがたく使わせてもらおう。
+</p>
+<p>
+う～む、上手く動いてるっぽいけど「RSSファイルが存在しません。ご利用のブログを再度確認してください。」とユーザ画面には出てる。む～...まあGoogleブログ検索とかで上手く反映されてるみたいなので気にしない方向で。
+</p>
+
+

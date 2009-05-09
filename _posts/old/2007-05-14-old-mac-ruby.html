@@ -1,0 +1,33 @@
+---
+layout: old_post
+title: Macでブログに張るRubyソースコードを簡単に色付けしたい
+permalink: /tatsuya/show/323-mac-ruby
+---
+<p>
+<img src="http://farm1.static.flickr.com/189/496359662_27e2e81132.jpg" class="corner iradius10 ishadow10"/>
+</p><p class="clear">
+Mac用テキストエディタのCotEditor、簡単にスクリプト処理を組み込めるらしい
+</p><p>
+<a href="http://blog.livedoor.jp/dankogai/archives/50819304.html">404 Blog Not Found Mac - CotEditorがはげしくイカしている件</a>
+</p><p>
+ブログにソースコードを張るとき色付けをやりたいと思っていたのでちょうど良い、試してみる。
+<br />探してみたところ色々あるらしいけど、今回は<a href="http://www.nslabs.jp/rb2html.rhtml">rb2html</a>てライブラリを利用してみよう。
+</p><p>
+1) <a href="http://www.nslabs.jp/archives/rb2html-2.2.1.tar.gz">rb2html を落として</a>適当な所に置く
+<br />2) 以下のスクリプトをCotEditorのスクリプトメニュー ( ~/Library/Application\ Support/CotEditor/ScriptMenu/ ) へ置く
+<br />3) 目的のコードをCotEditorで開いて選択、スクリプトメニューから (2) のスクリプトを選ぶ
+</p><p>
+<strong>ScriptMenu</strong><strong>へ置く</strong>
+</p><pre class="source">
+   1| <span class="comment">#!/usr/local/bin/ruby</span>
+   2| <span class="comment"># %%%{CotEditorXInput=Selection}%%%</span>
+   3| <span class="comment"># %%%{CotEditorXOutput=ReplaceSelection}%%%</span>
+   4| require <span class="str">"rb2html/factory.rb"</span>
+   5| 
+   6| f = Rb2HTML::Factory.get_formatter <span class="str">"ruby"</span>
+   7| puts f.format_code(ARGF.read, <span class="num">1</span>)
+</pre><p>
+cssのクラスが指定されてるので、あとはcssで色を決定すればＯＫ。
+<br />選択した文字列が標準入力に入って、標準出力へ出力した文字列に置き換わるらしい。この簡単さは良いね、Rubyで手軽に書けるし。
+</p>
+

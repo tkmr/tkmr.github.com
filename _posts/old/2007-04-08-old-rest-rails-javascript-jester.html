@@ -1,0 +1,71 @@
+---
+layout: old_post
+title: RESTなRails向けのJavaScriptライブラリ Jester まとめ
+permalink: /tatsuya/show/303-rest-rails-javascript-jester
+---
+<p>
+<a href="http://blog.tkmr.org/tatsuya/show/301-jester-restfull-rails-javascript">昨日のエントリJester</a>について補足。
+<br />Jester.jsソースを見ると本当にシンプルで、まだ欲しい機能もありそうなので一通りまとめてみた。
+</p><p>
+基本的な登場人物はBaseクラス (prototype) だけ、あとXML.ObjTreというライブラリを使用してXML → DOM → XMLの変換を行ってるみたい。このライブラリ何気に日本人が作者なんだね、初めて知った。 以下まとめ
+</p><p>
+<span style="font-size:13pt;"><strong>主なメソッド</strong></span>
+</p><p>
+<strong>Base.model(</strong><strong>モデル名</strong><strong>, </strong><strong>サーバ</strong><strong>URL, </strong><strong>単数形の名前</strong><strong>, </strong><strong>複数形の名前</strong><strong>)</strong>
+</p><p>
+modelクラスの宣言。もしモデル名がBookなどで、単数形book &#38; 複数形book<strong>s</strong> のように単純な変化なら暗黙的に行ってくれる。 Base.model("Book") でOK。
+<br />例；Base.model("Book");
+</p><p>
+<strong>Base.find(</strong><strong>目的の</strong><strong>ID)</strong>
+</p><p>
+モデル名Book &#38; 引数のidが1だとすれば http://localhost:3000/books/1.xml へGETリクエストして結果XMLをJavaScriptのオブジェクトにパースする。
+<br />例：var book = Book.find(6);
+</p><p>
+<strong>Base.</strong><strong>対象プロパティ</strong>
+</p><p>
+モデルBookのtitleを編集する場合、 Book.title = "新しいタイトル" のように直接編集
+<br />例：book.title="新しいタイトル"
+</p><p>
+<strong>Base.save()</strong>
+</p><p>
+オブジェクトの保存、新規か更新かでPOSTとPUTを切り替えてくれる。正確にはPOSTリクエストに _method=put を付けた疑似PUTアクセス
+<br />例；book.save();
+</p><p>
+<strong>Base.destroy()</strong>
+</p><p>
+オブジェクトの削除、DELETEリクエストを投げる（_method=delete)
+<br />例：book.destroy();
+</p><p>
+<strong>Base.build({</strong><strong>属性</strong><strong>: </strong><strong>値</strong><strong>, </strong><strong>属性</strong><strong>: </strong><strong>値</strong><strong>})</strong>
+</p><p>
+オブジェクトを引数の属性&#38;値で新規作成、newがJavaScriptの予約語なので"build"らしい。saveはされない。
+<br />例：var book = Book.build({title: "オブジェクト指向スクリプト言語Ruby"})
+</p><p>
+<strong>Base.create({</strong><strong>属性</strong><strong>: </strong><strong>値</strong><strong>, </strong><strong>属性</strong><strong>: </strong><strong>値</strong><strong>})</strong>
+</p><p>
+オブジェクトを引数の属性&#38;値で新規作成してsaveも行う。build -&gt; save
+<br />例：var book = Book.create({title: "オブジェクト指向スクリプト言語Ruby"})
+</p><p>
+<span style="font-size:13pt;"><strong>その他</strong></span>
+</p><p>
+<strong>Base.new_record()</strong>
+</p><p>
+そのオブジェクトが新規の物か？サーバへ保存済みか？をbooleanで返す。Base.buildの後はtrue
+</p><p>
+<strong>Base.singular_url()</strong>
+</p><p>
+オブジェクトの単数形のURL。http://localhost:3000/books/1.xml
+</p><p>
+<strong>Base.plural_url()</strong>
+</p><p>
+オブジェクトの複数形のURL。http://localhost:3000/books.xml
+</p><p>
+<strong>Base.valid()</strong>
+</p><p>
+オブジェクトの保存でエラーがあった場合trueを返す。入力チェック等
+</p><p>
+<strong>Base.errors[]</strong>
+</p><p>
+オブジェクト保存でエラーがあった場合、エラーメッセージ保存
+</p>
+

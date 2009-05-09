@@ -1,0 +1,82 @@
+---
+layout: old_post
+title: scaffold_resourceでRESTfullなRailsアプリ(2)
+permalink: /tatsuya/show/245-scaffold-resource-restfull-rails-2
+---
+		<div class="section">
+			<p>scaffold_resourceを試してみる第2段、下のサイトを参考にしてhas_manyな場合を試してみる。</p>
+
+			<p><a href="http://earthcode.com/blog/2007/01/nested_crud_resources_in_rails.html">Web 2.0 Technologies: Nested CRUD resources in Rails 1.2</a></p>
+			<p>まずscaffoldを作る。post-&gt;commentsなhas_manyの関係のモデルの場合</p>
+<pre>ruby script/generate scaffold_resource Post title:string body:text
+ruby script/generate scaffold_resource Comment body:text
+</pre>
+
+			<p>/db/migrate/002_create_comments.rb へ外部キーを追加、あとhas_many/belongs_toをモデルへ追加</p>
+
+<pre>t.column :post_id, :integer
+
+class Post &lt; ActiveRecord::Base
+  has_many :comments
+  
+end
+
+class Comment &lt; ActiveRecord::Base
+  belongs_to :post
+end
+</pre>
+
+			<p>/config/routes.rbにmap.resourcesが入っているので修正してhas_manyの構造に</p>
+<pre>ActionController::Routing::Routes.draw do |map|
+  map.resources :posts do |posts|
+    posts.resources :comments
+  end
+  map.connect ':controller/service.wsdl', :action =&gt; 'wsdl'
+  map.connect ':controller/:action/:id.:format'
+  map.connect ':controller/:action/:id'
+end
+</pre>
+
+			<p>あとは細かい部分を修正。</p>
+			<p></p><ul>
+			 <li>使いやすくするために、before_filterで親のpostを@postとして持っておく</li>
+			 <li>commentsのindex表示を@post.comments.find(:all)に変更</li>
+			 <li>comment新規作成時にpost_idを保存</li>
+			 <li>comment関連Viewのリンクを&lt;%= link_to 'Show', comment_path(@post, @comment) %&gt;みたいに変更</li>
+
+			</ul><p></p>
+			<p>このあたりは今までのRailsアプリと同じ感覚だと思う</p>
+<pre>class CommentsController &lt; ApplicationControlle
+  before_filter (:get_post)
+  def index
+    @comments = @post.comments.find(:all)
+    respond_to do |format|
+      format.html # index.rhtml
+      format.xml  { render :xml =&gt; @comments.to_xml }
+    end
+  end
+  def create
+    @comment = Comment.new(params[:comment])
+    @comment.post_id = @post.id
+    ...........
+  end
+  ............
+  private
+  def get_post
+    @post = Post.find(params[:post_id])
+  end
+end
+</pre>
+
+			<p>で、アクセスしてみる</p>
+
+<pre>GET /posts/1               #id=1のpostを表示
+GET /posts/1/comments      #id=1のpostに紐づくcomment一覧
+POST /posts/1/comments     #id=1のpostに紐づくcomment新規作成
+PUT  /posts/1/comments/1   #id=1のpostに紐づくcommentの更新
+DELETE /posts/1/comments/1 #id=1のpostに紐づくcommentの削除
+</pre>
+
+			<p>疑問：postのID=1が params[:post_id]に入ってくるのはなんで？map.resources{|post| post.resources}のおかげ？</p>
+		</div>
+

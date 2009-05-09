@@ -1,0 +1,49 @@
+---
+layout: old_post
+title: Jester ver1.3 変更点メモ
+permalink: /tatsuya/show/346-jester-ver1-3
+---
+<p>
+<a href="http://blog.tkmr.org/tatsuya/show/344-javascript-rest-jester-ver1-3-jsonp">先日のエントリ</a>の続き
+<br />JavaScriptによるRESTクライアント <a href="http://giantrobots.thoughtbot.com/2007/6/11/jester-1-3-jsonic-rest">Jester</a> のver 1.3がリリースされたみたい。
+</p><p>
+<a href="http://giantrobots.thoughtbot.com/2007/6/11/jester-1-3-jsonic-rest" title=":: GIANT ROBOTS SMASHING INTO OTHER GIANT ROBOTS :: Jester 1.3: Jsonic REST ">:: GIANT ROBOTS SMASHING INTO OTHER GIANT ROBOTS :: Jester 1.3: Jsonic REST</a>
+</p><p>
+ざっくりと変更点メモ
+</p><p>
+<span style="font-size:13pt;"><strong>JSON</strong></span><span style="font-size:13pt;"><strong>サポート</strong></span>
+</p><p>
+<strong>Base.model("User", {format: "json"});</strong>
+<br />と宣言に{format: "json"}のオプションを付けることでJSONでリクエスト＆レスポンスを行う。通信は普通にXMLHTTPrequest。
+<br />サーバ側をRailsで実装するなら to_json でOK
+</p><pre>respond_to do |format|
+　format.xml  { render :xml =&gt; @user.to_xml }
+　format.json { render :json =&gt; @user.to_json}
+end
+</pre><p>
+あとprototype.js風にレスポンスヘッダのX-JSONフィールドに書いてあるJSONをコールバック関数の引数として受け取れる。
+</p><p>
+サーバ側で headers["X-JSON"]="{foo: 'bar'}" とかを返すと
+</p><pre>
+&gt;&gt;&gt; foo=""
+&gt;&gt;&gt; c = User.find(5, {}, function(base, json){ foo = json.foo })
+GET http://localhost:3000/users/5.json
+&gt;&gt;&gt; foo
+"bar"
+</pre><p>
+データの型などメタデータを送れば良いかも、と書いてる気がするけど違うかも。
+</p><p>
+<span style="font-size:13pt;"><strong>ヘルパーメソッド</strong></span><span style="font-size:13pt;"><strong> updateAttributes </strong></span><span style="font-size:13pt;"><strong>と</strong></span><span style="font-size:13pt;"><strong> setAttributes </strong></span><span style="font-size:13pt;"><strong>を追加</strong></span>
+</p><p>
+User.setAttributes({name: "newName", role: "Admin"})
+<br />とやるとnameとroleをセットしてくれる、updateAttributesは同時にsave()を実行してくれる。
+</p><p>
+<span style="font-size:13pt;"><strong>次期バージョンについて</strong></span>
+</p><p>
+「次はIFRAMEを使ったクロスサイトの通信をやる」らしい、dojoの<a href="http://kawa.at.webry.info/200608/article_1.html">IFRAME PROXY</a>のようなことをやるのかな？
+<br />よく知らないんだけど、あれはIFRAMEを自分と相手のサイトに置いてドメインを越えよう、ってことだよね。自分がコントロールできるサーバじゃないと意味無いような.....例えば「TwitterのAPIが叩きたい」なんて用途には使えないと思ってたんだけど、違うのかな？
+<br />この辺面白そうだし、<a href="http://blog.tkmr.org/tatsuya/show/347">調べて後で書こう</a>
+</p><p>
+リンクだけ張っといて自分へプレッシャーを与えるメソッド発動：）
+</p>
+

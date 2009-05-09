@@ -1,0 +1,36 @@
+---
+layout: old_post
+title: RailsでApollo（みたいなこと）を実現するプラットフォーム Slingshot
+permalink: /tatsuya/show/288-rails-apollo-slingshot
+---
+<p>
+<img src="http://blog.tkmr.org/images/apollo-shing.png" />
+</p><p>
+一週間くらいネットに繋がってなくて溜まってた未読RSSをもりもり読んでやっと世間に追いついた。。。と思ってたら、<del>Macromedia </del> Adobeから<a href="http://labs.adobe.com/technologies/apollo/">Apollo</a>がリリースされたね。まだよく知らないけど、HTML + JavaScriptでデスクトップアプリケーションが作れる、ってことで良いの？ローカルのデータにアクセスできたり、クロスサイトへXMLHttpRequestできたり、面白いと思うけど肝心のWebとの連携はどうなるんだろ？
+</p><p>
+こうなるとデスクトップはOutlookで、WEBからはOutlookWebAccessみたいな連携が欲しい。理想を言えばローカルとWEBで同じコードが動いて欲しい、ローカルではSVKでオンラインになればSubversionのリポジトリと同期みたいなことがやりたい。云々と思ってたらRailsで丁度それを実現する<a href="http://joyeur.com/2007/03/22/joyent-slingshot">Slingshot</a>てのが発表された！
+</p><p>
+発表は<a href="http://joyeur.com/2007/03/22/joyent-slingshot">これ</a>
+<br />技術的な背景とかは<a href="http://blog.magnetk.com/2007/03/22/joyent-slingshot/">ここ</a>？
+</p><p>
+Railsが動く環境をパッケージにしてローカル動作可能にしたのがSlingshotてことっぽい、Windowsの<a href="http://instantrails.rubyforge.org/wiki/wiki.pl">Instant Rails</a>やMacの<a href="http://locomotive.raaum.org/">Locomotive</a>に似てるけど、より簡単で<strong>カスタマイズ可能</strong>と言ってるのが期待できる、その上に好きなRailsアプリケーションを乗せて配布しろってことかな。
+</p><p>
+<img src="http://joyeur.com/images/76.png" style="float:none;" height="265" width="253" />
+</p><p>
+開発元のJoyentがWebアプリケーションとしてサービスしてるWEBカレンダーをローカルで動かしてる<a href="http://youngobungo.bingodisk.com/bingo/public/slingshot/slingshot_democast.mov">デモを見ると</a>、Webと同じRailsアプリケーションがローカルで動いてるのは当然として
+</p><p>
+　・ローカルとWebのデータ同期
+<br />　・オフラインでデータ登録
+<br />　・ローカルのデータ（iCal形式？）をドラッグドロップしてカレンダーへ登録！
+</p><p>
+みたいなことができてる、当然既存のコードへ手を加える必要はあって、ActiveRecordに関係する辺り（Model）に30行ほどコードを加えるだけで良い、と書いてあるけど本当かな？
+</p><p>
+早速手元のコードで試してみようと思ったけど、リリースは4月を予定しているそうだ。「なら4月に発表しろよ！しょぼーん：( 」と思ったけど、Apolloがリリースされたこのタイミングで発表したかったのねと納得、環境はWindowsとMac対応だってさー
+</p>
+<br/>
+<p>
+追記：<br/>
+Slingshotの発表文翻訳してくれてるサイトがあった <a href="http://technohippy.developer.drecom.jp/blog/articles/264">Spirit of Apprenticeship (みならいだましい)</a><br /> 
+Apolloとの比較 <a href="http://blogs.grf-design.com/archives/2007/03/joyent_slingsho.html">grf-design beta</a>
+</p>
+

@@ -1,0 +1,146 @@
+---
+layout: old_post
+title: JavaScript → ActionScript なオブジェクトブリッジを作ってみた
+permalink: /tatsuya/show/359-javascript-actionscript
+---
+<p>
+最近、絶賛ActionScript勉強中なのですが、どうもたまにJavaScriptを叩きたいときがある。というかActionScriptからJavaScriptのオブジェクトを触れると色々便利そうなので、オブジェクトブリッジ的な物を作ってみた。ネタ元は
+</p><p>
+<a href="http://usrb.in/amachang/static/unknown/">ActionScript </a><span style="font-family:serif;"><a href="http://usrb.in/amachang/static/unknown/">→</a></span><a href="http://usrb.in/amachang/static/unknown/"> JavaScript オブジェクトブリッジを作ってみた</a><a href="http://usrb.in/amachang/static/unknown/"> : IT</a><a href="http://usrb.in/amachang/static/unknown/">戦記</a>
+</p><p>
+これ。AS→JSがあるなら、JS→ASも必要だろうということで逆方向を作ってみた。
+</p><p>
+<span style="font-size:13pt;"><strong>動作</strong></span>
+</p><p>
+こんな感じでJavaScriptのオブジェクトをActionScriptから触れる。alert("Hoge")なんかのグローバル関数は window.alert("Hoge") でOK。
+</p><p class="clear">
+<strong>以下</strong><strong>ActionScript</strong><strong>で</strong>
+</p><pre class="source">
+var window<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"window"</span>);
+window.alert(<span class="str">"Alert from ActionScript!!"</span>);
+<span class="regex">//</span>アラート表示を普通に
+</pre><p class="clear">
+<a href="http://www.flickr.com/photos/28646244@N00/780570496/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1293/780570496_f148f9ca33_o.png" width="399" height="148" alt="Picture 1" /></a>
+</p><pre class="source clear">
+var document<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"document"</span>);
+document.getElementById(<span class="str">"title1"</span>).innerHTML=<span class="str">"Hello World from ActionScript with normal"</span>;
+<span class="regex">//</span>DOM操作も普通に
+
+var element<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"Element"</span>);
+var title2<span class="sym">:AS2JS</span> = window.$(<span class="str">"title2"</span>);
+element.update(title2, <span class="str">"Hello World from ActionScript with prototype.js"</span>);
+<span class="regex">//</span>prototype.jsを使ってのDOM操作も普通に
+
+var Comic<span class="sym">:AS2JS</span> = AS2JS.register(<span class="str">"Comic = new Base('Comic')"</span>);
+var comicDiv<span class="sym">:AS2JS</span> = window.$(<span class="str">"comic"</span>);
+comicDiv.innerHTML = String(Comic.find(<span class="num">3</span>).title);
+<span class="regex">//</span>最近マイブームのJesterを使ってサーバからデータを取ってくる
+</pre><p class="clear">
+<a href="http://www.flickr.com/photos/28646244@N00/780570510/" title="Photo Sharing"><img src="http://farm2.static.flickr.com/1345/780570510_0e36b13ade_o.png" width="1045" height="416" alt="Picture 4" /></a>
+</p><p class="clear">
+デモページは今日夜作る、かも。
+</p><p class="clear">
+　＞追記：<a href="http://blog.tkmr.org/as2js-test.html">デモページ作った</a>。FireFoxで動作確認中
+</p><p>
+コードも貼っておきます、まだ色々改良の余地ありですが。
+</p><p>
+<span style="font-size:13pt;"><strong>ActionScript</strong></span>
+</p><p>
+ActionScript 1.0時代しかやったことなかったので、3.0は違和感ありあり。コード変な書き方あるかも。
+</p><pre class="source">package tkmr{
+   import flash.utils.*;
+   import flash.external.ExternalInterface;
+
+   public dynamic <span class="keyword">class</span> AS2JS extends Proxy {
+      private var _attributes<span class="sym">:Array</span>;
+      private var _item<span class="sym">:Array</span>;
+
+      public function AS2JS(id<span class="sym">:String</span>){
+        _attributes = new Array();
+        _attributes[<span class="str">"_JSObjectID"</span>] = id;
+      }
+      public static function register(generateScript<span class="sym">:String</span>)<span class="sym">:*</span>{
+        var id<span class="sym">:String</span> = ExternalInterface.call(<span class="str">"AS2JS.Register"</span>, String(generateScript));
+        <span class="keyword">return</span> (new AS2JS(id));
+      }
+
+      <span class="regex">//</span>private method....
+      public static function callJS(args<span class="sym">:*</span>)<span class="sym">:*</span>{
+        var result<span class="sym">:Array</span> = ExternalInterface.call(<span class="str">"AS2JS.Call"</span>, args);
+        <span class="keyword">if</span>(result[<span class="num">0</span>]==<span class="str">"JSObject"</span>){
+          var new_js<span class="sym">:AS2JS</span> = new AS2JS(result[<span class="num">1</span>]);
+          <span class="keyword">return</span> new_js;
+        }<span class="keyword">else</span>{
+          <span class="keyword">return</span> result[<span class="num">1</span>];
+        }
+      }
+      override flash_proxy function getProperty(name<span class="sym">:*</span>)<span class="sym">:*</span> {
+        trace(String(name));
+        <span class="keyword">if</span>(String(name)==<span class="str">"_JSObjectID"</span>){ <span class="keyword">return</span> _attributes[<span class="str">"_JSObjectID"</span>]; }
+        <span class="keyword">return</span> AS2JS.callJS([_attributes[<span class="str">"_JSObjectID"</span>], String(name)]);
+      }
+      override flash_proxy function setProperty(name<span class="sym">:*</span>, value<span class="sym">:*</span>)<span class="sym">:void</span> {
+        ExternalInterface.call(<span class="str">"AS2JS.Set"</span>, _attributes[<span class="str">"_JSObjectID"</span>], String(name), value);
+      }
+      override flash_proxy function callProperty(name<span class="sym">:*</span>, ... args)<span class="sym">:*</span> {
+        args.unshift(_attributes[<span class="str">"_JSObjectID"</span>], String(name));
+        <span class="keyword">return</span> AS2JS.callJS(args);
+      }
+
+      <span class="regex">//</span>Tekitou....
+      override flash_proxy function nextNameIndex(index<span class="sym">:int</span>)<span class="sym">:int</span> {
+         <span class="keyword">if</span> (index == <span class="num">0</span>){
+           _item = new Array();
+           _item[<span class="num">0</span>]=<span class="str">"_JSObjectID"</span>;
+         }
+         <span class="keyword">if</span>(index &lt; _item.length){
+           <span class="keyword">return</span> index + <span class="num">1</span>;
+         }<span class="keyword">else</span>{
+           <span class="keyword">return</span> <span class="num">0</span>;
+         }
+      }
+      override flash_proxy function nextName(index<span class="sym">:int</span>)<span class="sym">:String</span> {
+        <span class="keyword">return</span> _item[index - <span class="num">1</span>];
+      }
+      override flash_proxy function nextValue(index<span class="sym">:int</span>)<span class="sym">:*</span>{
+        <span class="keyword">return</span> _attributes[String(_item[index - <span class="num">1</span>])];
+      }
+   }
+}
+</pre><p>
+<span style="font-size:13pt;"><strong>JavaScript</strong></span>
+</p><p>
+オブジェクトをAS2JS.storeへためておき、ActionScriptへIDを返す
+</p><pre class="source">var AS2JS = {
+    store: [],
+    Set: function(){
+        var id = arguments[<span class="num">0</span>];
+        var func = arguments[<span class="num">1</span>];
+        AS2JS.store[id][func]=arguments[<span class="num">2</span>];
+    },
+    Call: function (){
+        var id = arguments[<span class="num">0</span>].shift();
+        var func = arguments[<span class="num">0</span>].shift();
+        var obj = AS2JS.store[id];
+        <span class="keyword">for</span>(var i=<span class="num">0</span>; i&lt;arguments[<span class="num">0</span>].length; i++){
+            arguments[<span class="num">0</span>][i] = arguments[<span class="num">0</span>][i][<span class="str">"_JSObjectID"</span>] ?
+                AS2JS.store[arguments[<span class="num">0</span>][i][<span class="str">"_JSObjectID"</span>]] :
+                arguments[<span class="num">0</span>][i];
+        }
+        var result = typeof(obj[func])==<span class="str">"function"</span> ? obj[func].apply(obj, arguments[<span class="num">0</span>]) : obj[func];
+        <span class="keyword">if</span>(typeof(result)==<span class="str">"string"</span> || typeof(result)==<span class="str">"number"</span> || typeof(result)==<span class="str">"undefined"</span>){
+            <span class="keyword">return</span> [typeof(result), result];
+        }<span class="keyword">else</span>{
+            var new_id = AS2JS.store.push(result);
+            <span class="keyword">return</span> [<span class="str">"JSObject"</span>, (new_id - <span class="num">1</span>)];
+        }
+    },
+    Register: function (generateScript){
+        var id = AS2JS.store.push(eval(generateScript));
+        <span class="keyword">return</span> (id - <span class="num">1</span>);
+    }
+}
+</pre><p>
+あとはActionScriptのガベージコレクトのイベントをキャッチして、ActionScript → JavaScript と不要なオブジェクト削除の処理を加えたいな。ActionScriptでガベージコレクトのイベントをキャッチてどうやるんだろ。。
+</p>
+
