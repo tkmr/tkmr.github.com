@@ -3,11 +3,17 @@ body{
   margin:0px;
   padding:0px;
   font-family: 'ヒラギノ明朝 Pro W3','Hiragino Mincho Pro','ＭＳ Ｐ明朝','MS PMincho',Georgia,"Times New Roman",Serif;
+  font-size:94%;
 }
 
 .left{ float:left; }
 .right{ float:right; }
 .clear{ clear:both; }
+
+blockquote{
+  font-style: italic;
+  margin:6px 40px;
+}
 
 h4{
   margin:6px 0px;
@@ -66,15 +72,16 @@ span.create_date{
   font-style: italic;
 }
 .post .body {
-  width: 70%;
+  width: 90%;
   padding: 15px 30px 30px 22px;
-  line-height:160%;
+  line-height:170%;
 }
 .post .body pre{
   line-height:120%;
 }
 .post .body p{
-  margin:2px 0px;
+  margin:1px 0px;
+  padding:8px 0px;
 }
 
 #post_show{
