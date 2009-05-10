@@ -3,7 +3,7 @@ layout: nil
 ---
 <?xml version="1.0" encoding="utf-8"?>
 <feed xmlns="http://www.w3.org/2005/Atom">
- <title>blog.tkmr.org new</title>
+ <title>blog.tkmr.org</title>
  <link href="http://blog.tkmr.org/atom.xml" rel="self"/>
  <link href="http://blog.tkmr.org/"/>
  <updated>{{ site.time | date_to_xmlschema }}</updated>
@@ -13,13 +13,16 @@ layout: nil
  </author>
 
  {% for post in site.posts limit:20 %}
+    {% evalassign isNotOldBlog = !(post.url =~ /tatsuya\/show/) %}
+    {% if isNotOldBlog %}
  <entry>
    <title>{{ post.title }}</title>
    <link href="http://blog.tkmr.org{{ post.url }}"/>
    <updated>{{ post.date | date_to_xmlschema }}</updated>
-   <id>http://blog.tkmr.org{{ post.id }}</id>
+   <id>http://blog.tkmr.org/{{ post.id }}</id>
    <content type="html">{{ post.content | xml_escape }}</content>
  </entry>
+    {% endif %}
  {% endfor %}
 
 </feed>

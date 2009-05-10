@@ -2,13 +2,15 @@
 layout: default
 title: blog.tkmr.org - index
 ---
+<div id="top_list">
+  <div class="hfeed autopagerize_page_element">
+    {% for post in site.posts limit:5 %}
+      {% include _includes/post.html %}
+    {% endfor %}
+  </div>
+  <div class="autopagerize_insert_before"></div>
 
-<div>
-  {% for post in site.posts limit:10 %}
-    <div>
-      <span class="create_date">{{ post.date | date_to_string }}</span>
-      <a href="{{ post.url }}">{{ post.title }}</a>
-    </div>
-  {% endfor %}
-  <a href="/"></a>
+  <div class="right">
+    <h3><a href="/page/1.html" rel="next">次へ&gt;&gt;</a></h3>
+  </div>
 </div>

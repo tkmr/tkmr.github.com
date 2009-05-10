@@ -1,0 +1,80 @@
+<html>
+<head>
+  <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+  <title>Jester1.3 test</title>
+  <script src="/javascripts/prototype.js" type="text/javascript"></script>
+  <script src="/javascripts/jester.js" type="text/javascript"></script>
+  <script src="/javascripts/jester-json.js" type="text/javascript"></script>
+  <script type="text/javascript">
+    //Twitter API
+    Base.model("Statuse",{format:"json", prefix:"http://twitter.com"});
+    //LDR API
+    Base.model("LDRFeed",{format:"json", plural:"feed", prefix:"http://rpc.reader.livedoor.com"});
+    //Wassr API
+    Base.model("Wassr",{format:"json", plural:"api.wassr.jp", prefix:"http:/"}); //むむむ苦肉の策
+    //AmebaVision API
+    Base.model("AmebaVision",{format:"json", plural:"api/get", prefix:"http://vision.ameba.jp"});
+
+
+    //find sample
+    function render(base, temp){
+      base.each(function(b){
+        var div=$("response").appendChild(document.createElement("div"));
+        div.innerHTML = temp.evaluate(b);
+      });
+    }
+    function StatuseTest(){
+      Statuse.find("friends.json",
+        {},
+        {onSuccess: function(base){
+          render(base, new Template("<img src='#{profile_image_url}'/><a href='#{url}'><h2>Name : #{name}</h2></a><h4>#{description}</h4>"));
+      }});
+    }
+    function LDRFeedTest(){
+      LDRFeed.find("discover",
+        {format:"json", url:"http://www6.ocn.ne.jp/~katoyuu/"},
+        {onSuccess: function(base){
+          render(base, new Template("<a href='#{link}'><h2>#{title}</h2></a><h4>subscribers_count:#{subscribers_count}</h4>"));
+      }});
+    }
+    function WassrTest(){
+      Wassr.find("public_timeline.json",
+        {},
+        {onSuccess:function(base){
+          render(base, new Template("<a href='#{link}'><h2>#{text}</h2></a><h4>#{user_login_id}</h4>"));
+      }});
+    }
+    function AmebaVisionTest(){
+      AmebaVision.find("recentMovie.do",
+        {format:"jsonp"},
+        {onSuccess:function(base){
+          render(base[0].item, new Template("<a href='#{link}'><img src='#{imageUrlLarge}'/><h2>#{title}</h2></a>"));
+      }});
+    }
+  </script>
+  <style type="text/css">
+    body{
+      background-color:#FFE;
+    }
+    #response div{
+      border:1px #AAA solid;
+    }
+    #response h2{
+      font-size:120%;
+    }
+    body *{
+      margin:5px;
+      padding:0px;
+    }
+  </style>
+</head>
+<body>
+  <div>
+    <a href='#' onClick="StatuseTest();">Twitter Test</a> |
+    <a href='#' onClick="LDRFeedTest();">LDRFeed Test</a> |
+    <a href='#' onClick="WassrTest();">Wassr Test</a> |
+    <a href='#' onClick="AmebaVisionTest();">AmebaVision Test</a>
+  </div>
+  <div id="response"></div>
+</body>
+</html>

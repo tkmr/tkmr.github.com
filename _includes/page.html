@@ -1,0 +1,29 @@
+<div id="page_list">
+  <div class="hfeed autopagerize_page_element">
+    {% evalassign offsetnum = context.scopes.last["currentpage"] * 5 %}
+    {% evalassign nextpage = context.scopes.last["currentpage"] + 1 %}
+    {% evalassign prevpage = context.scopes.last["currentpage"] - 1 %}
+
+    {% for post in site.posts limit:5 offset:offsetnum %}
+      {% include post.html %}
+    {% endfor %}
+  </div>
+  <div class="autopagerize_insert_before"></div>
+
+  {% if prevpage > 0 %}
+  <div class="left">
+    <h3><a href="/page/{{ prevpage }}.html" rel="prev">&lt;&lt;戻る</a></h3>
+  </div>
+  {% endif %}
+
+  {% evalassign nextoffset = context.scopes.last["nextpage"] * 5 %}
+  {% for post in site.posts limit:1 offset:nextoffset %}
+  {% if post %}
+  <div class="right">
+    <h3><a href="/page/{{ nextpage }}.html" rel="next">次へ&gt;&gt;</a></h3>
+  </div>
+  {% endif %}
+  {% endfor %}
+
+  <div class="clear"> </div>
+</div>

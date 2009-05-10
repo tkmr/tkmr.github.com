@@ -1,0 +1,121 @@
+body{
+  background-color: #F1F1F1;
+  margin:0px;
+  padding:0px;
+  font-family: 'ヒラギノ明朝 Pro W3','Hiragino Mincho Pro','ＭＳ Ｐ明朝','MS PMincho',Georgia,"Times New Roman",Serif;
+}
+
+.left{ float:left; }
+.right{ float:right; }
+.clear{ clear:both; }
+
+h4{
+  margin:6px 0px;
+}
+ul{
+  margin:4px 0px;
+}
+p{
+  margin:8px 0px;
+}
+
+a{
+  border-bottom:1px dotted #45A5D0;
+  color: #0230D9;
+  text-decoration: none;
+}
+a:hover{
+  color: #3585D0;
+  text-decoration: underline;
+}
+/* a:visited{   color: #2060DF; } */
+
+img{ border:0px;}
+
+#head{
+  background-color: #FFF;
+  padding:30px 40px 20px;
+  font-size:130%;
+  text-align:left;
+}
+#head a{
+  border-bottom:none;
+  color: #000000;
+}
+
+.small{
+  font-size:76%;
+}
+
+.post{
+  margin:0px 0px 20px 0px;
+}
+.post .title{
+  margin: 10px 0px 0px 0px;
+  font-size:140%;
+}
+.post .title a{ color: #000000;}
+.post .title a:hover{ color: #3585D0;}
+
+span.create_date{
+  font-size:80%;
+  line-height:80%;
+  font-style: italic;
+}
+.post .body {
+  width: 70%;
+  padding: 15px 30px 30px 22px;
+  line-height:160%;
+}
+.post .body pre{
+  line-height:120%;
+}
+.post .body p{
+  margin:2px 0px;
+}
+
+#post_show{
+  margin: 0px 0px 10px;
+}
+
+#related{
+  margin:30px 0px;
+}
+#related h5{
+  margin:0px;
+  border-bottom:1px dotted #000;
+}
+#related hr{
+  margin:10px 0px 0px;
+}
+#related p{
+  margin:5px 0px 10px 0px;
+}
+
+#page_list{
+  margin:0px 0px 40px;
+}
+
+#content{
+  padding:0px 40px;
+  overflow:hidden;
+  background-color: #FFF;
+}
+
+#footer{
+  padding: 10px 10px 30px;
+  font-size:90%;
+}
+
+#comment{
+  margin: 30px 0px 0px;
+  font-size:94%;
+}
+#comment h5{
+  margin:0px;
+  border-bottom:1px dotted #000;
+}
+
+.mright10{
+  margin-right:10px;
+}

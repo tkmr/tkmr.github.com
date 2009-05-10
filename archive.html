@@ -1,0 +1,15 @@
+---
+layout: default
+title: blog.tkmr.org - archive
+---
+
+<div>
+  <h4>過去のエントリ一覧</h4>
+  {% for post in site.posts %}
+    <p>
+      <span class="create_date">{{ post.date | date_to_string }}</span>
+      <a href="{{ post.url }}">{{ post.title }}</a>
+    </p>
+  {% endfor %}
+  <a href="/archive.html"></a>
+</div>

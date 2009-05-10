@@ -1,0 +1,12 @@
+  <div class="post hentry">
+    <h2 class="title entry-title">{{ post.title }}</h2>
+    <span class="create_date">{{ post.date | date_to_string }}</span>
+    <div class="body entry-content">
+      <div>{{ post.content }}</div>
+      <div class="right small">
+        <a href="{{ post.url }}" class="mright10" rel="bookmark">Permalink</a>
+        <a href="{{ post.url }}#disqus_thread">View Comments</a>
+      </div>
+    </div>
+    <div class="clear"> </div>
+  </div>
