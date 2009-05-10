@@ -44,7 +44,7 @@ img{ border:0px;}
 }
 
 .small{
-  font-size:76%;
+  font-size:82%;
 }
 
 .post{
@@ -54,7 +54,10 @@ img{ border:0px;}
   margin: 10px 0px 0px 0px;
   font-size:140%;
 }
-.post .title a{ color: #000000;}
+.post .title a{
+  color: #000000;
+  border-bottom:none;
+}
 .post .title a:hover{ color: #3585D0;}
 
 span.create_date{

@@ -1,5 +1,5 @@
   <div class="post hentry">
-    <h2 class="title entry-title">{{ post.title }}</h2>
+    <h2 class="title entry-title"><a href="{{ post.url }}">{{ post.title }}</a></h2>
     <span class="create_date">{{ post.date | date_to_string }}</span>
     <div class="body entry-content">
       <div>{{ post.content }}</div>

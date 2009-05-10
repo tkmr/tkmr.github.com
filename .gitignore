@@ -13,3 +13,4 @@ a.out
 *.o
 _drafts/
 _site/
+.DS_Store
